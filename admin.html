@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#000000" />
+<meta name="robots" content="noindex,nofollow" />
+<link rel="icon" href="favicon.svg" type="image/svg+xml" />
+<title>Admin — Spida Visuals</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=JetBrains+Mono:wght@400;500&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body class="admin-body">
+
+<!-- LOGIN SCREEN -->
+<div class="auth-wrap" id="authWrap">
+  <div class="auth-bg"></div>
+  <div class="auth-card">
+    <a href="index.html" class="logo logo--auth">
+      <span class="logo-mark"></span>
+      <span class="logo-text">Spida<em>Visuals</em></span>
+    </a>
+    <div class="auth-eyebrow">// ADMIN ACCESS</div>
+
+    <!-- Login form -->
+    <form id="loginForm" class="auth-form" style="display:none">
+      <h1>Welkom terug.</h1>
+      <p class="auth-sub">Log in om het admin paneel te openen. Werkt vanaf elk apparaat.</p>
+      <label>
+        <span>Wachtwoord</span>
+        <input type="password" id="loginPass" required autocomplete="current-password" placeholder="••••••••" />
+      </label>
+      <button type="submit" class="btn btn-primary btn-large">Inloggen →</button>
+      <p class="auth-err" id="loginErr"></p>
+      <button type="button" class="auth-reset" id="resetPassBtn">Lokale data van deze browser wissen</button>
+    </form>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="admin-shell" id="adminShell" style="display:none">
+
+  <aside class="admin-sidebar">
+    <a href="index.html" class="logo logo--admin">
+      <span class="logo-mark"></span>
+      <span class="logo-text">Spida<em>Visuals</em></span>
+    </a>
+    <nav class="admin-nav">
+      <a href="#dashboard" class="active" data-tab="dashboard"><span>◐</span> Overzicht</a>
+      <a href="#aanvragen" data-tab="aanvragen"><span>●</span> Nieuwe aanvragen <span class="count" id="leadCount">0</span></a>
+      <a href="#afgehandeld" data-tab="afgehandeld"><span>✓</span> Afgehandeld <span class="count" id="doneCount">0</span></a>
+      <a href="#chats" data-tab="chats"><span>○</span> Chatberichten <span class="count" id="chatCount">0</span></a>
+      <a href="#bezoekers" data-tab="bezoekers"><span>○</span> Bezoekers</a>
+      <a href="#stats" data-tab="stats"><span>○</span> Statistieken</a>
+    </nav>
+    <div class="admin-side-foot">
+      <a href="index.html" class="admin-side-link">↗ Bekijk website</a>
+      <button id="logoutBtn" class="admin-side-link admin-logout">Uitloggen</button>
+    </div>
+  </aside>
+
+  <main class="admin-main">
+    <header class="admin-topbar">
+      <div>
+        <div class="admin-eyebrow">// ADMIN PANEEL</div>
+        <h1 id="pageTitle">Dashboard</h1>
+      </div>
+      <div class="admin-topbar-right">
+        <span class="admin-time" id="adminTime"></span>
+        <button class="btn btn-ghost" id="exportBtn">⤓ Exporteer alles (.json)</button>
+      </div>
+    </header>
+
+    <!-- DASHBOARD / OVERZICHT TAB -->
+    <section class="admin-tab" id="tabDashboard">
+
+      <!-- ROW 1: BEZOEKERS -->
+      <div class="admin-section-label">Bezoekers</div>
+      <div class="stats-grid">
+        <div class="stat-card stat-card--accent">
+          <div class="stat-label">Totaal bezoeken</div>
+          <div class="stat-num" id="statVisitsTotal">0</div>
+          <div class="stat-sub">vanaf alle apparaten in deze browser</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Vandaag</div>
+          <div class="stat-num" id="statVisitsToday">0</div>
+          <div class="stat-sub">paginaweergaven vandaag</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Deze week</div>
+          <div class="stat-num" id="statVisitsWeek">0</div>
+          <div class="stat-sub">laatste 7 dagen</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Live nu</div>
+          <div class="stat-num"><span id="liveDot">●</span> <span id="statLive">0</span></div>
+          <div class="stat-sub">actief in laatste minuut</div>
+        </div>
+      </div>
+
+      <!-- ROW 2: AANVRAGEN -->
+      <div class="admin-section-label">Aanvragen</div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Totaal aanvragen</div>
+          <div class="stat-num" id="statTotal">0</div>
+          <div class="stat-sub">via formulier + chatbot</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Vandaag</div>
+          <div class="stat-num" id="statToday">0</div>
+          <div class="stat-sub">nieuwe aanvragen vandaag</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Deze week</div>
+          <div class="stat-num" id="statWeek">0</div>
+          <div class="stat-sub">laatste 7 dagen</div>
+        </div>
+        <div class="stat-card stat-card--alert">
+          <div class="stat-label">Open / nog opvolgen</div>
+          <div class="stat-num" id="statOpen">0</div>
+          <div class="stat-sub">nog niet beantwoord</div>
+        </div>
+      </div>
+
+      <!-- CHART + SOURCES -->
+      <div class="admin-grid-2">
+        <div class="admin-panel">
+          <div class="admin-panel-head">
+            <h2>Activiteit · laatste 14 dagen</h2>
+            <span class="admin-panel-sub">Bezoeken (lichte balk) vs aanvragen (witte balk)</span>
+          </div>
+          <div class="chart-wrap">
+            <svg id="leadsChart" viewBox="0 0 600 240" preserveAspectRatio="xMidYMid meet"></svg>
+          </div>
+        </div>
+        <div class="admin-panel">
+          <div class="admin-panel-head">
+            <h2>Bron verdeling</h2>
+            <span class="admin-panel-sub">Waar komen aanvragen vandaan</span>
+          </div>
+          <div class="source-list" id="sourceList"></div>
+        </div>
+      </div>
+
+      <!-- RECENT -->
+      <div class="admin-panel">
+        <div class="admin-panel-head">
+          <h2>Recente aanvragen</h2>
+          <a href="#aanvragen" class="admin-link" data-tab="aanvragen">Alles bekijken →</a>
+        </div>
+        <div class="leads-table" id="recentLeads"></div>
+      </div>
+    </section>
+
+    <!-- NIEUWE AANVRAGEN TAB -->
+    <section class="admin-tab" id="tabAanvragen" style="display:none">
+      <div class="admin-panel">
+        <div class="admin-panel-head">
+          <h2>Nieuwe aanvragen</h2>
+          <div class="admin-filters">
+            <input type="text" id="leadSearch" placeholder="Zoek op naam, email, type..." />
+          </div>
+        </div>
+        <div class="leads-table" id="allLeads"></div>
+      </div>
+    </section>
+
+    <!-- AFGEHANDELD TAB -->
+    <section class="admin-tab" id="tabAfgehandeld" style="display:none">
+      <div class="admin-panel">
+        <div class="admin-panel-head">
+          <h2>Afgehandelde aanvragen</h2>
+          <div class="admin-filters">
+            <input type="text" id="doneSearch" placeholder="Zoek op naam, email, type..." />
+          </div>
+        </div>
+        <div class="leads-table" id="doneLeads"></div>
+      </div>
+    </section>
+
+    <!-- CHATBERICHTEN TAB -->
+    <section class="admin-tab" id="tabChats" style="display:none">
+      <div class="admin-panel">
+        <div class="admin-panel-head">
+          <h2>Chatbot berichten</h2>
+          <span class="admin-panel-sub">Vragen waar de bot geen antwoord op had en die naar mail zijn doorgestuurd</span>
+        </div>
+        <div class="chats-list" id="chatsList"></div>
+      </div>
+    </section>
+
+    <!-- BEZOEKERS TAB -->
+    <section class="admin-tab" id="tabBezoekers" style="display:none">
+      <div class="info-banner">
+        <strong>ℹ Beperking</strong>
+        Bezoeken worden lokaal in deze browser opgeslagen. Voor échte cross-device statistieken (alle bezoekers van alle apparaten) kan je later <a href="https://www.goatcounter.com" target="_blank">GoatCounter</a> of <a href="https://plausible.io" target="_blank">Plausible</a> toevoegen — gratis, één script-tag.
+      </div>
+      <div class="admin-grid-2">
+        <div class="admin-panel">
+          <div class="admin-panel-head">
+            <h2>Bezoeken per pagina</h2>
+            <span class="admin-panel-sub">Welke pagina's bekijken bezoekers</span>
+          </div>
+          <div class="source-list" id="pagesList"></div>
+        </div>
+        <div class="admin-panel">
+          <div class="admin-panel-head">
+            <h2>Bezoeken per dag</h2>
+            <span class="admin-panel-sub">Laatste 14 dagen</span>
+          </div>
+          <div class="chart-wrap">
+            <svg id="visitsChart" viewBox="0 0 600 240" preserveAspectRatio="xMidYMid meet"></svg>
+          </div>
+        </div>
+      </div>
+      <div class="admin-panel">
+        <div class="admin-panel-head">
+          <h2>Verwijzingen</h2>
+          <span class="admin-panel-sub">Waar komen bezoekers vandaan</span>
+        </div>
+        <div class="source-list" id="referrersList"></div>
+      </div>
+    </section>
+
+    <!-- STATS TAB -->
+    <section class="admin-tab" id="tabStats" style="display:none">
+      <div class="admin-grid-2">
+        <div class="admin-panel">
+          <div class="admin-panel-head">
+            <h2>Type project</h2>
+            <span class="admin-panel-sub">Welke diensten worden aangevraagd</span>
+          </div>
+          <div class="source-list" id="serviceList"></div>
+        </div>
+        <div class="admin-panel">
+          <div class="admin-panel-head">
+            <h2>Budget verdeling</h2>
+            <span class="admin-panel-sub">Indicatieve budgetten</span>
+          </div>
+          <div class="source-list" id="budgetList"></div>
+        </div>
+      </div>
+      <div class="admin-panel">
+        <div class="admin-panel-head">
+          <h2>Conversie funnel</h2>
+          <span class="admin-panel-sub">Status van leads</span>
+        </div>
+        <div class="funnel" id="funnel"></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- LEAD DETAIL MODAL -->
+<div class="lead-modal" id="leadModal" style="display:none">
+  <div class="lead-modal-card">
+    <button class="lead-modal-close" id="leadModalClose" aria-label="Sluit">✕</button>
+    <div id="leadModalBody"></div>
+  </div>
+</div>
+
+<script>
+/* ==================== ADMIN LOGIC ==================== */
+
+/* ============================================
+   ADMIN WACHTWOORD — VERANDER NAAR EIGEN WACHTWOORD
+   Dit wachtwoord werkt op ELK apparaat (telefoon, laptop, etc.)
+   omdat het hardcoded in de code staat. Deploy opnieuw na wijzigen.
+   ============================================ */
+const ADMIN_PASSWORD = 'spida2026';
+
+const STORAGE_AUTHED = 'spida_admin_authed';
+const STORAGE_LEADS  = 'spida_leads';
+const STORAGE_VISITS = 'spida_visits';
+
+const authWrap = document.getElementById('authWrap');
+const adminShell = document.getElementById('adminShell');
+const setupForm = document.getElementById('setupForm');
+const loginForm = document.getElementById('loginForm');
+
+/* ===== Auth flow ===== */
+function showLogin() {
+  loginForm.style.display = 'flex';
+  if (setupForm) setupForm.style.display = 'none';
+  setTimeout(() => document.getElementById('loginPass').focus(), 100);
+}
+function showDashboard() {
+  authWrap.style.display = 'none';
+  adminShell.style.display = 'flex';
+  initDashboard();
+}
+
+function checkAuth() {
+  const isAuthed = sessionStorage.getItem(STORAGE_AUTHED) === '1';
+  if (isAuthed) showDashboard();
+  else showLogin();
+}
+
+loginForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const p = document.getElementById('loginPass').value;
+  const err = document.getElementById('loginErr');
+  if (p === ADMIN_PASSWORD) {
+    sessionStorage.setItem(STORAGE_AUTHED, '1');
+    err.textContent = '// TOEGANG VERLEEND';
+    setTimeout(() => showDashboard(), 400);
+  } else {
+    err.textContent = '// FOUT WACHTWOORD';
+    document.getElementById('loginPass').value = '';
+  }
+});
+
+/* (legacy reset button - geen functie meer nodig met hardcoded wachtwoord) */
+document.getElementById('resetPassBtn')?.addEventListener('click', () => {
+  if (confirm('Hiermee wis je alle aanvragen/chats van deze browser. Doorgaan?')) {
+    localStorage.removeItem(STORAGE_LEADS);
+    sessionStorage.removeItem(STORAGE_AUTHED);
+    location.reload();
+  }
+});
+
+document.getElementById('logoutBtn')?.addEventListener('click', () => {
+  sessionStorage.removeItem(STORAGE_AUTHED);
+  location.reload();
+});
+
+/* ==================== DASHBOARD ==================== */
+function loadLeads() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_LEADS) || '[]'); }
+  catch { return []; }
+}
+function saveLeads(leads) {
+  localStorage.setItem(STORAGE_LEADS, JSON.stringify(leads));
+}
+function loadVisits() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_VISITS) || '[]'); }
+  catch { return []; }
+}
+
+function fmtDate(iso) {
+  const d = new Date(iso);
+  const dd = String(d.getDate()).padStart(2,'0');
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  return `${dd}/${mm} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+function fmtDateLong(iso) {
+  return new Date(iso).toLocaleString('nl-NL', { dateStyle:'full', timeStyle:'short' });
+}
+
+function initDashboard() {
+  renderTime();
+  setInterval(renderTime, 1000);
+  setInterval(() => { renderVisitorStats(loadVisits()); }, 5000); // live updates
+  switchTab('dashboard');
+  refreshAll();
+
+  // Tab nav
+  document.querySelectorAll('[data-tab]').forEach(a => {
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      switchTab(a.dataset.tab);
+    });
+  });
+
+  // Search inputs
+  document.getElementById('leadSearch')?.addEventListener('input', renderAllLeads);
+  document.getElementById('doneSearch')?.addEventListener('input', renderDoneLeads);
+
+  // Export
+  document.getElementById('exportBtn').addEventListener('click', exportData);
+
+  // Modal close
+  document.getElementById('leadModalClose').addEventListener('click', closeLeadModal);
+  document.getElementById('leadModal').addEventListener('click', (e) => {
+    if (e.target.id === 'leadModal') closeLeadModal();
+  });
+
+  // Live refresh als andere tab een lead toevoegt
+  window.addEventListener('storage', (e) => {
+    if (e.key === STORAGE_LEADS) refreshAll();
+  });
+}
+
+function renderTime() {
+  document.getElementById('adminTime').textContent = new Date().toLocaleTimeString('nl-NL');
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.admin-tab').forEach(t => t.style.display = 'none');
+  const titles = {
+    dashboard:   'Overzicht',
+    aanvragen:   'Nieuwe aanvragen',
+    afgehandeld: 'Afgehandelde aanvragen',
+    chats:       'Chatbot berichten',
+    bezoekers:   'Bezoekers',
+    stats:       'Statistieken'
+  };
+  document.getElementById('pageTitle').textContent = titles[name] || 'Admin';
+  const target = document.getElementById('tab' + name.charAt(0).toUpperCase() + name.slice(1));
+  if (target) target.style.display = 'block';
+  document.querySelectorAll('.admin-nav a').forEach(a => a.classList.toggle('active', a.dataset.tab === name));
+}
+
+function refreshAll() {
+  const leads = loadLeads();
+  const visits = loadVisits();
+  renderStats(leads);
+  renderVisitorStats(visits);
+  renderChart(leads, visits);
+  renderSources(leads);
+  renderRecent(leads);
+  renderAllLeads();
+  renderDoneLeads();
+  renderChats(leads);
+  renderServiceStats(leads);
+  renderBudgetStats(leads);
+  renderFunnel(leads);
+  renderPagesList(visits);
+  renderVisitsChart(visits);
+  renderReferrers(visits);
+
+  // Counters
+  const newCount  = leads.filter(l => l.status !== 'done').length;
+  const doneCount = leads.filter(l => l.status === 'done').length;
+  const chatCount = leads.filter(l => l.source === 'chatbot').length;
+  document.getElementById('leadCount').textContent = newCount;
+  document.getElementById('doneCount').textContent = doneCount;
+  document.getElementById('chatCount').textContent = chatCount;
+}
+
+function renderVisitorStats(visits) {
+  const now = Date.now();
+  const dayMs = 86400000;
+  const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+  const total = visits.length;
+  const today = visits.filter(v => new Date(v.date) >= todayStart).length;
+  const week  = visits.filter(v => now - new Date(v.date).getTime() < 7*dayMs).length;
+  document.getElementById('statVisitsTotal').textContent = total;
+  document.getElementById('statVisitsToday').textContent = today;
+  document.getElementById('statVisitsWeek').textContent  = week;
+
+  // Live = heartbeats in laatste 60s (alleen zichtbaar als deze browser actief is)
+  const heartbeat = parseInt(sessionStorage.getItem('spida_heartbeat') || '0', 10);
+  const liveDot = document.getElementById('liveDot');
+  const live = (Date.now() - heartbeat < 60000) ? 1 : 0;
+  document.getElementById('statLive').textContent = live;
+  if (liveDot) liveDot.style.color = live ? '#10b981' : '#4a534f';
+}
+
+function renderPagesList(visits) {
+  const counts = {};
+  visits.forEach(v => { counts[v.page] = (counts[v.page]||0)+1; });
+  const total = Object.values(counts).reduce((a,b)=>a+b,0) || 1;
+  const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  if (!sorted.length) {
+    const el = document.getElementById('pagesList');
+    if (el) el.innerHTML = `<div class="empty-state small">Nog geen bezoeken in deze browser.</div>`;
+    return;
+  }
+  let html = '';
+  sorted.forEach(([k,v]) => {
+    const pct = Math.round(v/total*100);
+    html += `<div class="src-row"><div class="src-row-top"><span>${escapeHtml('/' + k)}</span><span class="src-num">${v}</span></div>
+      <div class="src-bar"><div class="src-bar-fill" style="width:${pct}%"></div></div><div class="src-pct">${pct}%</div></div>`;
+  });
+  const el = document.getElementById('pagesList');
+  if (el) el.innerHTML = html;
+}
+
+function renderVisitsChart(visits) {
+  const days = 14;
+  const buckets = Array(days).fill(0);
+  const now = new Date(); now.setHours(0,0,0,0);
+  const labels = [];
+  for (let i = days-1; i >= 0; i--) {
+    const d = new Date(now); d.setDate(d.getDate() - i);
+    labels.push(d);
+  }
+  visits.forEach(v => {
+    const d = new Date(v.date); d.setHours(0,0,0,0);
+    const diff = Math.floor((now - d) / 86400000);
+    if (diff >= 0 && diff < days) buckets[days - 1 - diff]++;
+  });
+  const max = Math.max(1, ...buckets);
+  const W = 600, H = 240, pad = 30, bw = (W - pad*2) / days;
+  let bars = '';
+  buckets.forEach((v, i) => {
+    const h = (v / max) * (H - pad*2 - 30);
+    const x = pad + i * bw + bw*0.15;
+    const y = H - pad - h - 20;
+    const w = bw * 0.7;
+    bars += `<rect x="${x}" y="${y}" width="${w}" height="${h || 2}" rx="3" fill="${v ? 'var(--teal)' : 'rgba(255,255,255,0.15)'}" />`;
+    if (v) bars += `<text x="${x + w/2}" y="${y - 6}" text-anchor="middle" fill="var(--text-2)" font-family="JetBrains Mono" font-size="10">${v}</text>`;
+    if (i % 2 === 0 || i === days-1) {
+      const lbl = `${String(labels[i].getDate()).padStart(2,'0')}/${String(labels[i].getMonth()+1).padStart(2,'0')}`;
+      bars += `<text x="${x + w/2}" y="${H - 8}" text-anchor="middle" fill="var(--text-3)" font-family="JetBrains Mono" font-size="9">${lbl}</text>`;
+    }
+  });
+  bars += `<line x1="${pad}" y1="${H-pad-20}" x2="${W-pad}" y2="${H-pad-20}" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>`;
+  const el = document.getElementById('visitsChart');
+  if (el) el.innerHTML = bars;
+}
+
+function renderReferrers(visits) {
+  const counts = {};
+  visits.forEach(v => {
+    const r = v.ref ? new URL(v.ref).hostname : 'Direct (geen verwijzing)';
+    counts[r] = (counts[r]||0)+1;
+  });
+  const total = Object.values(counts).reduce((a,b)=>a+b,0) || 1;
+  const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0, 8);
+  const el = document.getElementById('referrersList');
+  if (!el) return;
+  if (!sorted.length) {
+    el.innerHTML = `<div class="empty-state small">Nog geen verwijzingen.</div>`;
+    return;
+  }
+  let html = '';
+  sorted.forEach(([k,v]) => {
+    const pct = Math.round(v/total*100);
+    html += `<div class="src-row"><div class="src-row-top"><span>${escapeHtml(k)}</span><span class="src-num">${v}</span></div>
+      <div class="src-bar"><div class="src-bar-fill" style="width:${pct}%"></div></div><div class="src-pct">${pct}%</div></div>`;
+  });
+  el.innerHTML = html;
+}
+
+function renderStats(leads) {
+  const now = Date.now();
+  const dayMs = 86400000;
+  const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+  const total = leads.length;
+  const week = leads.filter(l => now - new Date(l.date).getTime() < 7*dayMs).length;
+  const today = leads.filter(l => new Date(l.date) >= todayStart).length;
+  const open = leads.filter(l => l.status !== 'done').length;
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statWeek').textContent = week;
+  document.getElementById('statToday').textContent = today;
+  document.getElementById('statOpen').textContent = open;
+}
+
+function renderChart(leads, visits) {
+  const days = 14;
+  const leadBuckets = Array(days).fill(0);
+  const visitBuckets = Array(days).fill(0);
+  const now = new Date(); now.setHours(0,0,0,0);
+  const labels = [];
+  for (let i = days-1; i >= 0; i--) {
+    const d = new Date(now); d.setDate(d.getDate() - i);
+    labels.push(d);
+  }
+  leads.forEach(l => {
+    const d = new Date(l.date); d.setHours(0,0,0,0);
+    const diff = Math.floor((now - d) / 86400000);
+    if (diff >= 0 && diff < days) leadBuckets[days - 1 - diff]++;
+  });
+  visits.forEach(v => {
+    const d = new Date(v.date); d.setHours(0,0,0,0);
+    const diff = Math.floor((now - d) / 86400000);
+    if (diff >= 0 && diff < days) visitBuckets[days - 1 - diff]++;
+  });
+  const max = Math.max(1, ...visitBuckets, ...leadBuckets);
+
+  const W = 600, H = 240, pad = 30, bw = (W - pad*2) / days;
+  let svg = '';
+  // Bezoeken (mint, halftransparant) — staan achter
+  visitBuckets.forEach((v, i) => {
+    const h = (v / max) * (H - pad*2 - 30);
+    const x = pad + i * bw + bw*0.1;
+    const y = H - pad - h - 20;
+    const w = bw * 0.8;
+    svg += `<rect x="${x}" y="${y}" width="${w}" height="${h || 2}" rx="3" fill="${v ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.1)'}" />`;
+  });
+  // Aanvragen (wit, voorgrond, smaller)
+  leadBuckets.forEach((v, i) => {
+    const h = (v / max) * (H - pad*2 - 30);
+    const x = pad + i * bw + bw*0.32;
+    const y = H - pad - h - 20;
+    const w = bw * 0.36;
+    if (v > 0) {
+      svg += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2" fill="#eef2f0" />`;
+      svg += `<text x="${x + w/2}" y="${y - 6}" text-anchor="middle" fill="#eef2f0" font-family="JetBrains Mono" font-size="10">${v}</text>`;
+    }
+  });
+  // X-axis labels
+  visitBuckets.forEach((_, i) => {
+    if (i % 2 === 0 || i === days-1) {
+      const x = pad + i * bw + bw/2;
+      const lbl = `${String(labels[i].getDate()).padStart(2,'0')}/${String(labels[i].getMonth()+1).padStart(2,'0')}`;
+      svg += `<text x="${x}" y="${H - 8}" text-anchor="middle" fill="var(--text-3)" font-family="JetBrains Mono" font-size="9">${lbl}</text>`;
+    }
+  });
+  // Baseline
+  svg += `<line x1="${pad}" y1="${H-pad-20}" x2="${W-pad}" y2="${H-pad-20}" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>`;
+  // Legend
+  svg += `<g transform="translate(${pad}, 12)">
+    <rect x="0" y="0" width="10" height="10" rx="2" fill="rgba(255,255,255,0.5)"/>
+    <text x="14" y="9" fill="var(--text-3)" font-family="JetBrains Mono" font-size="10">Bezoeken</text>
+    <rect x="80" y="0" width="10" height="10" rx="2" fill="#eef2f0"/>
+    <text x="94" y="9" fill="var(--text-3)" font-family="JetBrains Mono" font-size="10">Aanvragen</text>
+  </g>`;
+  document.getElementById('leadsChart').innerHTML = svg;
+}
+
+function renderSources(leads) {
+  const sources = { 'Contact formulier': 0, 'Chatbot': 0 };
+  leads.forEach(l => {
+    if (l.source === 'chatbot') sources['Chatbot']++;
+    else sources['Contact formulier']++;
+  });
+  const total = leads.length || 1;
+  let html = '';
+  Object.entries(sources).forEach(([k,v]) => {
+    const pct = Math.round(v / total * 100);
+    html += `<div class="src-row">
+      <div class="src-row-top"><span>${k}</span><span class="src-num">${v}</span></div>
+      <div class="src-bar"><div class="src-bar-fill" style="width:${pct}%"></div></div>
+      <div class="src-pct">${pct}%</div>
+    </div>`;
+  });
+  document.getElementById('sourceList').innerHTML = html;
+}
+
+function renderRecent(leads) {
+  const recent = [...leads].reverse().slice(0, 5);
+  document.getElementById('recentLeads').innerHTML = renderLeadsTable(recent);
+  bindLeadRows();
+}
+
+function renderAllLeads() {
+  const leads = loadLeads();
+  const q = (document.getElementById('leadSearch')?.value || '').toLowerCase().trim();
+  let filtered = [...leads].reverse().filter(l => l.status !== 'done');
+  if (q) filtered = filtered.filter(l =>
+    (l.name||'').toLowerCase().includes(q) ||
+    (l.email||'').toLowerCase().includes(q) ||
+    (l.service||'').toLowerCase().includes(q) ||
+    (l.message||'').toLowerCase().includes(q)
+  );
+  document.getElementById('allLeads').innerHTML = renderLeadsTable(filtered, 'Geen nieuwe aanvragen.');
+  bindLeadRows();
+}
+
+function renderDoneLeads() {
+  const leads = loadLeads();
+  const q = (document.getElementById('doneSearch')?.value || '').toLowerCase().trim();
+  let filtered = [...leads].reverse().filter(l => l.status === 'done');
+  if (q) filtered = filtered.filter(l =>
+    (l.name||'').toLowerCase().includes(q) ||
+    (l.email||'').toLowerCase().includes(q) ||
+    (l.service||'').toLowerCase().includes(q) ||
+    (l.message||'').toLowerCase().includes(q)
+  );
+  document.getElementById('doneLeads').innerHTML = renderLeadsTable(filtered, 'Nog geen afgehandelde aanvragen.');
+  bindLeadRows();
+}
+
+function renderLeadsTable(leads, emptyMsg) {
+  if (!leads.length) {
+    return `<div class="empty-state">${emptyMsg || 'Nog geen aanvragen. Wanneer iemand het contactformulier invult of via de chatbot een vraag mailt, verschijnt het hier.'}</div>`;
+  }
+  let html = `<div class="leads-row leads-head">
+    <span>Datum</span><span>Naam</span><span>E-mail</span><span>Type</span><span>Bron</span><span>Status</span>
+  </div>`;
+  leads.forEach(l => {
+    const status = l.status === 'done' ? '<span class="pill pill-done">✓ afgehandeld</span>' : '<span class="pill pill-new">● nieuw</span>';
+    const source = l.source === 'chatbot' ? '<span class="pill pill-chat">💬 chatbot</span>' : '<span class="pill pill-form">📝 form</span>';
+    html += `<div class="leads-row" data-id="${l.id}">
+      <span class="mono">${fmtDate(l.date)}</span>
+      <span>${escapeHtml(l.name || '—')}</span>
+      <span class="mono small">${escapeHtml(l.email || '—')}</span>
+      <span>${escapeHtml(l.service || '—')}</span>
+      <span>${source}</span>
+      <span>${status}</span>
+    </div>`;
+  });
+  return html;
+}
+
+function bindLeadRows() {
+  document.querySelectorAll('.leads-row[data-id]').forEach(row => {
+    row.addEventListener('click', () => openLeadModal(row.dataset.id));
+  });
+}
+
+function openLeadModal(id) {
+  const lead = loadLeads().find(l => l.id === id);
+  if (!lead) return;
+  const body = document.getElementById('leadModalBody');
+  let html = `
+    <div class="modal-eyebrow-mono">// AANVRAAG ${lead.id.slice(0,8)}</div>
+    <h2>${escapeHtml(lead.name || 'Onbekend')}</h2>
+    <p class="modal-meta">${fmtDateLong(lead.date)} · ${lead.source === 'chatbot' ? 'Via chatbot' : 'Via contactformulier'}</p>
+
+    <div class="modal-grid">
+      <div><span class="ml">// E-MAIL</span><a href="mailto:${escapeAttr(lead.email)}">${escapeHtml(lead.email || '—')}</a></div>
+      <div><span class="ml">// BEDRIJF</span>${escapeHtml(lead.company || '—')}</div>
+      <div><span class="ml">// TYPE</span>${escapeHtml(lead.service || '—')}</div>
+      <div><span class="ml">// BUDGET</span>${escapeHtml(lead.budget || '—')}</div>
+      <div><span class="ml">// DEADLINE</span>${escapeHtml(lead.deadline || '—')}</div>
+      <div><span class="ml">// BRON</span>${escapeHtml(lead.foundUs || '—')}</div>
+    </div>
+
+    ${lead.message ? `<div class="modal-block"><span class="ml">// BERICHT</span><p>${escapeHtml(lead.message).replace(/\n/g,'<br>')}</p></div>` : ''}
+    ${lead.conversation ? `<div class="modal-block"><span class="ml">// CHATBOT CONVERSATIE</span><pre>${escapeHtml(lead.conversation)}</pre></div>` : ''}
+
+    <div class="modal-actions">
+      <a href="mailto:${escapeAttr(lead.email)}?subject=${encodeURIComponent('Re: jouw aanvraag bij Spida Visuals')}" class="btn btn-primary">📨 Reageer via mail</a>
+      <button class="btn btn-ghost" id="toggleStatus">${lead.status === 'done' ? '↺ Markeer als nieuw' : '✓ Markeer als afgehandeld'}</button>
+      <button class="btn btn-ghost btn-danger" id="deleteLead">🗑 Verwijderen</button>
+    </div>
+  `;
+  body.innerHTML = html;
+  document.getElementById('leadModal').style.display = 'flex';
+
+  document.getElementById('toggleStatus').addEventListener('click', () => {
+    const leads = loadLeads();
+    const idx = leads.findIndex(l => l.id === id);
+    if (idx >= 0) {
+      leads[idx].status = leads[idx].status === 'done' ? 'new' : 'done';
+      saveLeads(leads);
+      refreshAll();
+      openLeadModal(id);
+    }
+  });
+  document.getElementById('deleteLead').addEventListener('click', () => {
+    if (!confirm('Aanvraag echt verwijderen?')) return;
+    const leads = loadLeads().filter(l => l.id !== id);
+    saveLeads(leads);
+    closeLeadModal();
+    refreshAll();
+  });
+}
+function closeLeadModal() {
+  document.getElementById('leadModal').style.display = 'none';
+}
+
+function renderChats(leads) {
+  const chats = leads.filter(l => l.source === 'chatbot').reverse();
+  if (!chats.length) {
+    document.getElementById('chatsList').innerHTML = `<div class="empty-state">Nog geen chatbot conversaties. Als de bot een vraag niet kan beantwoorden en de bezoeker mailt, verschijnt het hier.</div>`;
+    return;
+  }
+  let html = '';
+  chats.forEach(c => {
+    html += `<div class="chat-card" data-id="${c.id}">
+      <div class="chat-card-head">
+        <strong>${escapeHtml(c.name)}</strong>
+        <span class="mono small">${fmtDate(c.date)}</span>
+      </div>
+      <a class="chat-email" href="mailto:${escapeAttr(c.email)}">${escapeHtml(c.email)}</a>
+      <p class="chat-q"><strong>Vraag:</strong> ${escapeHtml(c.message || '—')}</p>
+      ${c.conversation ? `<details><summary>Volledige conversatie</summary><pre>${escapeHtml(c.conversation)}</pre></details>` : ''}
+    </div>`;
+  });
+  document.getElementById('chatsList').innerHTML = html;
+}
+
+function renderServiceStats(leads) {
+  const counts = {};
+  leads.forEach(l => { if (l.service) counts[l.service] = (counts[l.service]||0)+1; });
+  const total = Object.values(counts).reduce((a,b)=>a+b,0) || 1;
+  const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  if (!sorted.length) {
+    document.getElementById('serviceList').innerHTML = `<div class="empty-state small">Nog geen data.</div>`;
+    return;
+  }
+  let html = '';
+  sorted.forEach(([k,v]) => {
+    const pct = Math.round(v/total*100);
+    html += `<div class="src-row"><div class="src-row-top"><span>${escapeHtml(k)}</span><span class="src-num">${v}</span></div>
+      <div class="src-bar"><div class="src-bar-fill" style="width:${pct}%"></div></div><div class="src-pct">${pct}%</div></div>`;
+  });
+  document.getElementById('serviceList').innerHTML = html;
+}
+
+function renderBudgetStats(leads) {
+  const counts = {};
+  leads.forEach(l => { if (l.budget) counts[l.budget] = (counts[l.budget]||0)+1; });
+  const total = Object.values(counts).reduce((a,b)=>a+b,0) || 1;
+  const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  if (!sorted.length) {
+    document.getElementById('budgetList').innerHTML = `<div class="empty-state small">Nog geen data.</div>`;
+    return;
+  }
+  let html = '';
+  sorted.forEach(([k,v]) => {
+    const pct = Math.round(v/total*100);
+    html += `<div class="src-row"><div class="src-row-top"><span>${escapeHtml(k)}</span><span class="src-num">${v}</span></div>
+      <div class="src-bar"><div class="src-bar-fill" style="width:${pct}%"></div></div><div class="src-pct">${pct}%</div></div>`;
+  });
+  document.getElementById('budgetList').innerHTML = html;
+}
+
+function renderFunnel(leads) {
+  const total = leads.length;
+  const open = leads.filter(l => l.status !== 'done').length;
+  const done = leads.filter(l => l.status === 'done').length;
+  const visits = loadVisits().length;
+  const conv = visits ? (total / visits * 100).toFixed(1) : '0.0';
+  const html = `
+    <div class="funnel-row"><span>👥 Totaal bezoeken (deze browser)</span><strong>${visits}</strong></div>
+    <div class="funnel-row"><span>📥 Totaal aanvragen</span><strong>${total}</strong></div>
+    <div class="funnel-row"><span>● Nog open</span><strong>${open}</strong></div>
+    <div class="funnel-row"><span>✓ Afgehandeld</span><strong>${done}</strong></div>
+    <div class="funnel-row"><span>📊 Conversie bezoeker → aanvraag</span><strong>${conv}%</strong></div>
+    <div class="funnel-row"><span>✅ Conversie aanvraag → afgehandeld</span><strong>${total ? Math.round(done/total*100) : 0}%</strong></div>
+  `;
+  document.getElementById('funnel').innerHTML = html;
+}
+
+function exportData() {
+  const data = {
+    exported: new Date().toISOString(),
+    aanvragen: loadLeads(),
+    bezoeken: loadVisits()
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `spida-export-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function escapeHtml(s) {
+  return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function escapeAttr(s) { return escapeHtml(s); }
+
+/* Init */
+checkAuth();
+</script>
+
+</body>
+</html>

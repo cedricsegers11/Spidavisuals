@@ -1,0 +1,8 @@
+# Netlify redirects — oude paden naar nieuwe pagina's
+/account.html      /contact.html      301
+/account           /contact.html      301
+/inloggen          /contact.html      301
+/login             /contact.html      301
+
+# Custom 404 fallback — Netlify pakt 404.html automatisch maar voor de zekerheid:
+/*                 /404.html          404

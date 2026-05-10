@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#000000" />
+<meta name="robots" content="noindex" />
+<link rel="icon" href="favicon.svg" type="image/svg+xml" />
+<title>Pagina niet gevonden — Spida Visuals</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=JetBrains+Mono:wght@400;500&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css" />
+<style>
+.notfound{
+  min-height:100vh;
+  display:flex;align-items:center;justify-content:center;
+  padding:80px 22px;
+  position:relative;overflow:hidden;
+  background:#000;
+}
+.notfound::before,.notfound::after{
+  content:"";position:absolute;inset:0;pointer-events:none;
+}
+.notfound::before{
+  background:linear-gradient(115deg,
+    transparent 22%,
+    rgba(255,255,255,0.04) 26%,
+    rgba(255,255,255,0.18) 28%,
+    rgba(255,255,255,0.04) 30%,
+    transparent 34%);
+  filter:blur(2px);mix-blend-mode:screen;opacity:.6;
+}
+.notfound::after{
+  background:linear-gradient(115deg,
+    transparent 65%,
+    rgba(255,255,255,0.04) 70%,
+    rgba(255,255,255,0.14) 72%,
+    rgba(255,255,255,0.04) 74%,
+    transparent 78%);
+  filter:blur(2px);mix-blend-mode:screen;opacity:.5;
+}
+.notfound-inner{
+  position:relative;z-index:2;
+  max-width:580px;text-align:center;
+}
+.notfound-eyebrow{
+  font-family:var(--font-mono);font-size:11.5px;
+  letter-spacing:.22em;color:#ef4444;
+  text-transform:uppercase;font-weight:500;
+  margin-bottom:24px;
+  display:inline-flex;align-items:center;gap:10px;
+  padding:7px 16px;border-radius:999px;
+  background:rgba(239,68,68,0.08);
+  border:1px solid rgba(239,68,68,0.25);
+}
+.notfound-eyebrow .dot{
+  width:7px;height:7px;border-radius:50%;
+  background:#ef4444;box-shadow:0 0 10px #ef4444;
+  animation:pulse 1.4s infinite;
+}
+.notfound-code{
+  font-family:var(--font-display);font-style:italic;font-weight:400;
+  font-size:clamp(110px,18vw,180px);
+  line-height:1;letter-spacing:-.05em;
+  background:linear-gradient(180deg,#ffffff 0%,#666 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 32px rgba(255,255,255,0.18));
+  margin-bottom:20px;
+}
+.notfound-title{
+  font-family:var(--font-display);font-weight:400;
+  font-size:clamp(28px,3.5vw,42px);
+  line-height:1.1;letter-spacing:-.025em;
+  color:#fff;margin-bottom:14px;
+}
+.notfound-title em{
+  font-style:italic;
+  background:linear-gradient(180deg,#fff 0%,#9c9ca0 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.notfound-sub{
+  color:var(--text-2);font-size:16px;line-height:1.6;
+  max-width:46ch;margin:0 auto 36px;
+}
+.notfound-cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.notfound-foot{
+  position:absolute;bottom:30px;left:0;right:0;
+  text-align:center;font-family:var(--font-mono);
+  font-size:11px;letter-spacing:.18em;
+  color:var(--text-4);text-transform:uppercase;
+}
+</style>
+</head>
+<body>
+
+<section class="notfound">
+  <div class="notfound-inner">
+    <div class="notfound-eyebrow">
+      <span class="dot"></span> SIGNAL LOST · 404
+    </div>
+    <div class="notfound-code">404</div>
+    <h1 class="notfound-title">Deze pagina is <em>off-air.</em></h1>
+    <p class="notfound-sub">Geen verbinding met de URL die je zocht. Misschien is de pagina verplaatst, of klopt de link niet meer. Geen zorgen — er is genoeg ander goed werk om te bekijken.</p>
+    <div class="notfound-cta">
+      <a href="index.html" class="btn btn-primary">↩ Terug naar home</a>
+      <a href="werk.html" class="btn btn-ghost">Bekijk ons werk</a>
+    </div>
+  </div>
+  <div class="notfound-foot">SPIDA VISUALS · spidavisuals.nl</div>
+</section>
+
+</body>
+</html>

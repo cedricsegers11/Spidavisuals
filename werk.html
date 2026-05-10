@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#000000" />
+<title>Werk — Spida Visuals</title>
+<meta name="description" content="Volledig portfolio van Spida Visuals. TikToks, Reels, YouTube edits, brand films en motion work." />
+<link rel="canonical" href="https://spidavisuals.nl/werk.html" />
+<link rel="icon" href="favicon.svg" type="image/svg+xml" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Werk — Spida Visuals" />
+<meta property="og:description" content="Volledig portfolio: TikToks, Reels, YouTube edits en brand films." />
+<meta property="og:image" content="https://spidavisuals.nl/og-image.svg" />
+<meta property="og:url" content="https://spidavisuals.nl/werk.html" />
+<meta property="og:site_name" content="Spida Visuals" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://spidavisuals.nl/og-image.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=JetBrains+Mono:wght@400;500&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<div class="cursor-glow" id="cursorGlow"></div>
+
+<header class="nav" id="nav">
+  <a href="index.html" class="logo">
+    <span class="logo-mark"></span>
+    <span class="logo-text">Spida<em>Visuals</em></span>
+  </a>
+  <nav class="nav-links">
+    <a href="index.html" data-i18n="nav.home">Home</a>
+    <a href="diensten.html" data-i18n="nav.diensten">Diensten</a>
+    <a href="index.html#tarieven" data-i18n="nav.tarieven">Tarieven</a>
+    <a href="werk.html" data-i18n="nav.werk">Werk</a>
+    <a href="index.html#process" data-i18n="nav.proces">Proces</a>
+    <a href="index.html#about" data-i18n="nav.over">Over</a>
+    <a href="contact.html" data-i18n="nav.contact">Contact</a>
+  </nav>
+  <div class="lang-switcher">
+    <button class="lang-trigger" aria-haspopup="true" aria-expanded="false" type="button">
+      <span class="lang-current-flag">🇳🇱</span>
+      <span class="lang-current-code">NL</span>
+      <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
+    <div class="lang-menu" role="menu">
+      <button class="lang-option" data-lang="nl" type="button"><span class="lang-option-flag">🇳🇱</span> Nederlands</button>
+      <button class="lang-option" data-lang="en" type="button"><span class="lang-option-flag">🇬🇧</span> English</button>
+      <button class="lang-option" data-lang="de" type="button"><span class="lang-option-flag">🇩🇪</span> Deutsch</button>
+      <button class="lang-option" data-lang="fr" type="button"><span class="lang-option-flag">🇫🇷</span> Français</button>
+    </div>
+  </div>
+  <a href="contact.html" class="btn btn-primary nav-cta" data-i18n="nav.cta">Offerte aanvragen ↗</a>
+  <button class="nav-burger" id="burger" aria-label="Open menu">
+    <span></span><span></span><span></span>
+  </button>
+</header>
+
+<main>
+
+  <section class="page-hero">
+    <div class="page-hero-inner">
+      <div class="crumbs">
+        <a href="index.html">Home</a>
+        <span class="sep">/</span>
+        <span class="here">● 02 — Werk</span>
+      </div>
+      <h1>Volledig <em>portfolio.</em></h1>
+      <p>Een complete selectie van recente projecten. TikToks, Reels, YouTube edits en brand work — gefilterd per platform.</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <!-- Filter chips -->
+    <div class="work-filters" id="workFilters">
+      <button class="filter-chip active" data-filter="all">Alles <span class="chip-count" id="cntAll">0</span></button>
+      <button class="filter-chip" data-filter="youtube">YouTube <span class="chip-count" id="cntYt">0</span></button>
+      <button class="filter-chip" data-filter="tiktok">TikTok <span class="chip-count" id="cntTt">0</span></button>
+      <button class="filter-chip" data-filter="instagram">Instagram <span class="chip-count" id="cntIg">0</span></button>
+    </div>
+
+    <div class="work-grid work-grid--portfolio" id="workGrid">
+
+      <a class="work-item" data-platform="youtube" href="https://youtu.be/HzdrSRrUnKo" target="_blank" rel="noopener">
+        <img class="work-thumb-img" src="https://img.youtube.com/vi/HzdrSRrUnKo/hqdefault.jpg" alt="" loading="lazy" />
+        <span class="work-platform work-platform--yt">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M23 12s0-3.5-.5-5.2c-.3-1-1-1.7-2-2C18.8 4.5 12 4.5 12 4.5s-6.8 0-8.5.3c-1 .3-1.7 1-2 2C1 8.5 1 12 1 12s0 3.5.5 5.2c.3 1 1 1.7 2 2 1.7.3 8.5.3 8.5.3s6.8 0 8.5-.3c1-.3 1.7-1 2-2 .5-1.7.5-5.2.5-5.2zM10 15.5v-7l6 3.5-6 3.5z"/></svg>
+          YouTube
+        </span>
+        <span class="play-icon"></span>
+        <div class="work-meta">
+          <span class="work-tag">Long Form · Edit</span>
+          <h3>YouTube edit · #1</h3>
+          <p>Long form content uitgewerkt met pacing, color en sound.</p>
+        </div>
+      </a>
+
+      <a class="work-item" data-platform="youtube" href="https://youtu.be/mXHcd78MsoM" target="_blank" rel="noopener">
+        <img class="work-thumb-img" src="https://img.youtube.com/vi/mXHcd78MsoM/hqdefault.jpg" alt="" loading="lazy" />
+        <span class="work-platform work-platform--yt">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M23 12s0-3.5-.5-5.2c-.3-1-1-1.7-2-2C18.8 4.5 12 4.5 12 4.5s-6.8 0-8.5.3c-1 .3-1.7 1-2 2C1 8.5 1 12 1 12s0 3.5.5 5.2c.3 1 1 1.7 2 2 1.7.3 8.5.3 8.5.3s6.8 0 8.5-.3c1-.3 1.7-1 2-2 .5-1.7.5-5.2.5-5.2zM10 15.5v-7l6 3.5-6 3.5z"/></svg>
+          YouTube
+        </span>
+        <span class="play-icon"></span>
+        <div class="work-meta">
+          <span class="work-tag">YouTube · Showcase</span>
+          <h3>YouTube edit · #2</h3>
+          <p>Cinematic montage met motion accents en sound design.</p>
+        </div>
+      </a>
+
+      <a class="work-item" data-platform="youtube" href="https://youtu.be/2jcbBs2dzus" target="_blank" rel="noopener">
+        <img class="work-thumb-img" src="https://img.youtube.com/vi/2jcbBs2dzus/hqdefault.jpg" alt="" loading="lazy" />
+        <span class="work-platform work-platform--yt">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M23 12s0-3.5-.5-5.2c-.3-1-1-1.7-2-2C18.8 4.5 12 4.5 12 4.5s-6.8 0-8.5.3c-1 .3-1.7 1-2 2C1 8.5 1 12 1 12s0 3.5.5 5.2c.3 1 1 1.7 2 2 1.7.3 8.5.3 8.5.3s6.8 0 8.5-.3c1-.3 1.7-1 2-2 .5-1.7.5-5.2.5-5.2zM10 15.5v-7l6 3.5-6 3.5z"/></svg>
+          YouTube
+        </span>
+        <span class="play-icon"></span>
+        <div class="work-meta">
+          <span class="work-tag">YouTube · Edit</span>
+          <h3>YouTube edit · #3</h3>
+          <p>Long form project met motion accents en color treatment.</p>
+        </div>
+      </a>
+
+      <a class="work-item" data-platform="instagram" href="https://www.instagram.com/reel/DSxJINUDRd1/" target="_blank" rel="noopener">
+        <div class="work-thumb thumb-bg thumb-bg--ice"></div>
+        <div class="thumb-overlay" aria-hidden="true">
+          <svg class="thumb-spotlights" viewBox="0 0 400 280" preserveAspectRatio="xMidYMid slice">
+            <defs>
+              <linearGradient id="spotL2" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#fff" stop-opacity="0"/>
+                <stop offset="50%" stop-color="#fff" stop-opacity="0.35"/>
+                <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+              </linearGradient>
+              <linearGradient id="spotR2" x1="1" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#fff" stop-opacity="0"/>
+                <stop offset="50%" stop-color="#fff" stop-opacity="0.3"/>
+                <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <polygon points="0,0 80,0 280,280 200,280" fill="url(#spotL2)"/>
+            <polygon points="320,0 400,0 400,280 200,280" fill="url(#spotR2)"/>
+          </svg>
+          <div class="thumb-text thumb-text--ice">
+            <span class="ov-eyebrow">// LIVE · STAGE 2025</span>
+            <h4 class="ov-title">Bedankje <em>'25</em></h4>
+            <span class="ov-handle">@icemanvieze</span>
+          </div>
+        </div>
+        <span class="work-platform work-platform--ig">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.1" fill="currentColor" stroke="none"/></svg>
+          Instagram
+        </span>
+        <span class="play-icon"></span>
+        <div class="work-meta">
+          <span class="work-tag">Reel · @icemanvieze</span>
+          <h3>ICE — Bedankje 2025</h3>
+          <p>Stage performance bedankje, gemonteerd voor Reels.</p>
+        </div>
+      </a>
+
+      <a class="work-item" data-platform="tiktok" href="https://vm.tiktok.com/ZGdmynoNd/" target="_blank" rel="noopener">
+        <div class="work-thumb thumb-bg thumb-bg--cafe"></div>
+        <div class="thumb-overlay" aria-hidden="true">
+          <svg class="thumb-hooks" viewBox="0 0 400 280" preserveAspectRatio="xMidYMid slice">
+            <g stroke="rgba(255,255,255,0.18)" stroke-width="1" fill="none">
+              <path d="M40 0 L40 60 Q40 70 50 70"/>
+              <path d="M100 0 L100 50 Q100 60 110 60"/>
+              <path d="M160 0 L160 65 Q160 75 170 75"/>
+              <path d="M220 0 L220 55 Q220 65 230 65"/>
+              <path d="M280 0 L280 60 Q280 70 290 70"/>
+              <path d="M340 0 L340 50 Q340 60 350 60"/>
+            </g>
+            <line x1="0" y1="20" x2="400" y2="20" stroke="rgba(255,255,255,0.25)" stroke-width="2"/>
+          </svg>
+          <div class="thumb-text thumb-text--cafe">
+            <span class="ov-eyebrow">// CAG-DÖNER · BTS</span>
+            <h4 class="ov-title">Café <em>de Hoek</em></h4>
+            <span class="ov-handle">@eetcafedehoek</span>
+          </div>
+        </div>
+        <span class="work-platform work-platform--tt">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5.8 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.84-.1z"/></svg>
+          TikTok
+        </span>
+        <span class="play-icon"></span>
+        <div class="work-meta">
+          <span class="work-tag">Horeca · @eetcafedehoek</span>
+          <h3>Café De Hoek — Behind the Scenes</h3>
+          <p>CAG-Döner BTS edit voor TikTok — sfeer, mensen, het echte werk.</p>
+        </div>
+      </a>
+
+      <a class="work-item" data-platform="tiktok" href="https://vm.tiktok.com/ZGdHf7XAU/" target="_blank" rel="noopener">
+        <div class="work-thumb work-thumb--tt"></div>
+        <span class="work-platform work-platform--tt">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5.8 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.84-.1z"/></svg>
+          TikTok
+        </span>
+        <span class="play-icon"></span>
+        <div class="work-meta">
+          <span class="work-tag">TikTok · Vertical</span>
+          <h3>TikTok edit · #2</h3>
+          <p>Hook in seconde één — daarna pacing die kijkers vasthoudt.</p>
+        </div>
+      </a>
+
+      <a class="work-item" data-platform="tiktok" href="https://www.tiktok.com/@jesuissnasser/video/7617491019231218976" target="_blank" rel="noopener">
+        <div class="work-thumb work-thumb--tt"></div>
+        <span class="work-platform work-platform--tt">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5.8 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.84-.1z"/></svg>
+          TikTok
+        </span>
+        <span class="play-icon"></span>
+        <div class="work-meta">
+          <span class="work-tag">TikTok · @jesuissnasser</span>
+          <h3>TikTok edit · #3</h3>
+          <p>Verticale edit met scroll-stopping opening en sterke pacing.</p>
+        </div>
+      </a>
+
+      <a class="work-item" data-platform="tiktok" href="https://www.tiktok.com/@kbgcustomz" target="_blank" rel="noopener">
+        <div class="work-thumb work-thumb--kgb"></div>
+        <span class="work-platform work-platform--tt">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5.8 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.84-.1z"/></svg>
+          TikTok
+        </span>
+        <span class="play-icon"></span>
+        <div class="work-meta">
+          <span class="work-tag">Automotive · @kbgcustomz</span>
+          <h3>KGB Customs — TikTok Opnamen</h3>
+          <p>On-set camera-werk en opnamen voor automotive customizer KGB Customs.</p>
+        </div>
+      </a>
+
+    </div>
+
+    <!-- Empty state voor filters -->
+    <div class="empty-filter" id="emptyFilter" style="display:none">
+      <p>Geen video's in deze categorie.</p>
+    </div>
+  </section>
+
+  <section class="section section-cta">
+    <div class="cta-inner">
+      <span class="eyebrow">Volgende project</span>
+      <h2>Klaar voor jouw <em>edit?</em></h2>
+      <p>Vertel ons over je project — binnen 1 werkdag krijg je een eerlijke offerte.</p>
+      <div class="cta-actions">
+        <a href="contact.html" class="btn btn-primary btn-large">Offerte aanvragen →</a>
+        <a href="diensten.html" class="btn btn-ghost btn-large">Bekijk diensten</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <div class="logo logo--footer">
+        <span class="logo-mark"></span>
+        <span class="logo-text">Spida<em>Visuals</em></span>
+      </div>
+      <p>Visuele content die je merk laat opvallen. Een Nederlandse video- en motion studio voor merken die verder willen.</p>
+    </div>
+    <div>
+      <h4>Diensten</h4>
+      <a href="diensten.html">TikTok & Reels</a>
+      <a href="diensten.html">Vlog Edits</a>
+      <a href="diensten.html">Long Form</a>
+      <a href="diensten.html">Motion Graphics</a>
+    </div>
+    <div>
+      <h4>Studio</h4>
+      <a href="index.html#about">Over ons</a>
+      <a href="index.html#process">Proces</a>
+      <a href="werk.html">Ons werk</a>
+      
+      <a href="contact.html">Contact</a>
+    </div>
+    <div>
+      <h4>Contact</h4>
+      <a href="mailto:Spidabuissnes@hotmail.com">Spidabuissnes@hotmail.com</a>
+      <a href="#">Groningen, Nederland</a>
+      <div class="social">
+        <a href="https://www.tiktok.com/@spidavisuals" target="_blank" rel="noopener" aria-label="TikTok"><svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5.8 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.84-.1z"/></svg></a>
+        <a href="https://www.instagram.com/spida_visualz" target="_blank" rel="noopener" aria-label="Instagram"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.1" fill="currentColor" stroke="none"/></svg></a>
+        <a href="https://www.youtube.com/@spidaline_jackson_abbouzaad97" target="_blank" rel="noopener" aria-label="YouTube"><svg viewBox="0 0 24 24" width="19" height="19" fill="currentColor" aria-hidden="true"><path d="M23 12s0-3.5-.5-5.2c-.3-1-1-1.7-2-2C18.8 4.5 12 4.5 12 4.5s-6.8 0-8.5.3c-1 .3-1.7 1-2 2C1 8.5 1 12 1 12s0 3.5.5 5.2c.3 1 1 1.7 2 2 1.7.3 8.5.3 8.5.3s6.8 0 8.5-.3c1-.3 1.7-1 2-2 .5-1.7.5-5.2.5-5.2zM10 15.5v-7l6 3.5-6 3.5z"/></svg></a>
+        <a href="https://www.linkedin.com/company/spidavisuals" target="_blank" rel="noopener" aria-label="LinkedIn"><svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM8 17H5.5v-7.5H8V17zM6.75 8.25c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM18 17h-2.5v-3.5c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5V17H10v-7.5h2.5v1.04c.43-.62 1.18-1.04 2-1.04 1.66 0 3 1.34 3 3V17z"/></svg></a>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© <span id="year"></span> SPIDA VISUALS · ALLE RECHTEN VOORBEHOUDEN</span>
+    <span><a href="privacy.html">Privacy</a> · <a href="voorwaarden.html">Voorwaarden</a></span>
+  </div>
+</footer>
+
+<script>
+// Filter logica voor portfolio
+(function() {
+  const grid = document.getElementById('workGrid');
+  const filterButtons = document.querySelectorAll('.filter-chip');
+  const empty = document.getElementById('emptyFilter');
+  if (!grid) return;
+  const items = grid.querySelectorAll('.work-item');
+
+  // Tel items per platform
+  const counts = { all: items.length, youtube: 0, tiktok: 0, instagram: 0 };
+  items.forEach(item => { counts[item.dataset.platform] = (counts[item.dataset.platform]||0)+1; });
+  document.getElementById('cntAll').textContent = counts.all;
+  document.getElementById('cntYt').textContent = counts.youtube;
+  document.getElementById('cntTt').textContent = counts.tiktok;
+  document.getElementById('cntIg').textContent = counts.instagram;
+
+  filterButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const filter = btn.dataset.filter;
+      filterButtons.forEach(b => b.classList.toggle('active', b === btn));
+      let visible = 0;
+      items.forEach(item => {
+        const show = filter === 'all' || item.dataset.platform === filter;
+        item.style.display = show ? '' : 'none';
+        if (show) visible++;
+      });
+      empty.style.display = visible ? 'none' : 'block';
+    });
+  });
+})();
+</script>
+<!-- Chatbot Widget -->
+<div class="chatbot" id="chatbot">
+  <button class="chatbot-toggle" id="chatbotToggle" aria-label="Open chat met ons">
+    <span class="chatbot-icon">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      </svg>
+    </span>
+    <span class="chatbot-label">Chat met ons</span>
+    <span class="chatbot-pulse" aria-hidden="true"></span>
+  </button>
+  <div class="chatbot-panel" id="chatbotPanel" aria-hidden="true">
+    <header class="chatbot-header">
+      <div class="chatbot-avatar">S<span class="chatbot-online-dot"></span></div>
+      <div class="chatbot-titlebar">
+        <div class="chatbot-name">Spida Bot</div>
+        <div class="chatbot-status"><span class="dot">●</span>Online · meestal &lt; 1 min</div>
+      </div>
+      <button class="chatbot-close" id="chatbotClose" aria-label="Sluit chat">✕</button>
+    </header>
+    <div class="chatbot-messages" id="chatbotMessages" role="log" aria-live="polite"></div>
+    <div class="chatbot-quick" id="chatbotQuick"></div>
+    <form class="chatbot-input" id="chatbotForm" autocomplete="off">
+      <input type="text" id="chatbotText" placeholder="Stel een vraag..." aria-label="Typ je bericht" />
+      <button type="submit" aria-label="Verstuur bericht">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="22" y1="2" x2="11" y2="13"/>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+        </svg>
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- EmailJS — voor het versturen van offerte aanvragen + chatbot vragen -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="script.js"></script>
+
+</body>
+</html>

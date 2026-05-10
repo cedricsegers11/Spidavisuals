@@ -1,0 +1,10 @@
+# robots.txt voor spidavisuals.nl
+# Sta crawlers toe op de publieke pagina's, blokkeer admin
+
+User-agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /404.html
+
+# Sitemap
+Sitemap: https://spidavisuals.nl/sitemap.xml
