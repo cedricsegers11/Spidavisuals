@@ -7,6 +7,7 @@
 <meta name="robots" content="noindex,nofollow" />
 <link rel="icon" href="favicon.svg" type="image/svg+xml" />
 <title>Admin — Spida Visuals</title>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=JetBrains+Mono:wght@400;500&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -170,6 +171,33 @@
           <a href="#aanvragen" class="admin-link" data-tab="aanvragen">Alles bekijken →</a>
         </div>
         <div class="leads-table" id="recentLeads"></div>
+      </div>
+
+      <!-- BEVEILIGING — WACHTWOORD WIJZIGEN -->
+      <div class="admin-panel">
+        <div class="admin-panel-head">
+          <h2>🔐 Beveiliging</h2>
+          <span class="admin-panel-sub">Wijzig je admin wachtwoord — alleen jij ziet het nieuwe wachtwoord</span>
+        </div>
+        <form id="adminPasswordForm" class="settings-form">
+          <div class="settings-row">
+            <label>
+              <span>Huidig wachtwoord</span>
+              <input type="password" id="curAdminPass" required autocomplete="current-password" />
+            </label>
+            <label>
+              <span>Nieuw wachtwoord (min. 8 tekens)</span>
+              <input type="password" id="newAdminPass" required minlength="8" autocomplete="new-password" placeholder="••••••••" />
+            </label>
+          </div>
+          <label>
+            <span>Bevestig nieuw wachtwoord</span>
+            <input type="password" id="newAdminPass2" required minlength="8" autocomplete="new-password" placeholder="••••••••" />
+          </label>
+          <button type="submit" class="btn btn-primary">Wijzig wachtwoord →</button>
+          <p class="form-status" id="adminPassStatus" aria-live="polite"></p>
+          <p class="auth-foot-note">Je nieuwe wachtwoord wordt versleuteld opgeslagen en je krijgt een bevestiging op <strong>Spidabuissnes@hotmail.com</strong> met instructies om de wijziging cross-device te maken.</p>
+        </form>
       </div>
 
       <!-- Hidden orphan elements voor JS compatibiliteit (rendered maar niet getoond) -->
@@ -341,11 +369,25 @@ function lockoutRemaining() {
    echo -n "jouwwachtwoord" | sha256sum
    ============================================ */
 const ADMIN_PASSWORD_HASH = '69999ea9140725547bb937d36b96f784e63dd972e60cc80b7253b291f9977201';
+const STORAGE_PASS_OVERRIDE = 'spida_admin_pass_override';
 
 async function sha256(text) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
 }
+
+/* Actieve hash: localStorage override (door Spida zelf gewijzigd) of code default */
+function getActivePasswordHash() {
+  return localStorage.getItem(STORAGE_PASS_OVERRIDE) || ADMIN_PASSWORD_HASH;
+}
+
+/* EmailJS init (zelfde keys als public site) */
+const EMAILJS_CONFIG = {
+  publicKey:  'tEwWhluSNJ07ZeFGb',
+  serviceId:  'service_dn71xmk',
+  templateId: 'template_z9bc4ta'
+};
+if (window.emailjs) emailjs.init({ publicKey: EMAILJS_CONFIG.publicKey });
 
 const STORAGE_AUTHED    = 'spida_admin_authed';
 const STORAGE_LEADS     = 'spida_leads';
@@ -389,7 +431,7 @@ loginForm.addEventListener('submit', async (e) => {
   const p = document.getElementById('loginPass').value;
   const hash = await sha256(p);
 
-  if (hash === ADMIN_PASSWORD_HASH) {
+  if (hash === getActivePasswordHash()) {
     sessionStorage.setItem(STORAGE_AUTHED, '1');
     setAttempts({ count: 0, until: 0 }); // reset op success
     err.textContent = '// TOEGANG VERLEEND';
@@ -1094,6 +1136,98 @@ document.getElementById('pfExportHtml')?.addEventListener('click', () => {
   const w = window.open('', '_blank');
   w.document.write('<title>Portfolio HTML — Spida</title><pre style="font-family:monospace;font-size:12px;padding:20px;white-space:pre-wrap;word-wrap:break-word;background:#000;color:#0f0">' +
     html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</pre>');
+});
+
+/* ========== WACHTWOORD WIJZIGEN ========== */
+document.getElementById('adminPasswordForm')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const cur = document.getElementById('curAdminPass').value;
+  const newPass = document.getElementById('newAdminPass').value;
+  const newPass2 = document.getElementById('newAdminPass2').value;
+  const status = document.getElementById('adminPassStatus');
+
+  // Validatie
+  const curHash = await sha256(cur);
+  if (curHash !== getActivePasswordHash()) {
+    status.textContent = '// FOUT: huidig wachtwoord klopt niet';
+    return;
+  }
+  if (newPass !== newPass2) {
+    status.textContent = '// FOUT: nieuwe wachtwoorden komen niet overeen';
+    return;
+  }
+  if (newPass.length < 8) {
+    status.textContent = '// FOUT: minstens 8 tekens';
+    return;
+  }
+  if (newPass === cur) {
+    status.textContent = '// FOUT: nieuw wachtwoord is hetzelfde als huidig';
+    return;
+  }
+
+  const newHash = await sha256(newPass);
+
+  // 1. Override opslaan — werkt direct op dit apparaat
+  localStorage.setItem(STORAGE_PASS_OVERRIDE, newHash);
+
+  // 2. Email versturen naar Spida via EmailJS
+  status.textContent = '// VERZENDEN...';
+
+  const emailBody = `Hoi Spida,
+
+Je hebt zojuist je admin wachtwoord gewijzigd via spidavisuals.nl/admin.html
+
+═══════════════════════════════
+🔐 JE NIEUWE WACHTWOORD (BEWAAR DIT GOED):
+
+${newPass}
+
+═══════════════════════════════
+HASH (technisch, voor code update):
+${newHash}
+
+═══════════════════════════════
+WAT WERKT NU:
+✓ Op dit apparaat (browser) werkt het nieuwe wachtwoord direct
+✗ Op andere apparaten geldt nog het oude wachtwoord
+
+CROSS-DEVICE PERMANENT MAKEN:
+Open in browser → github.com/cedricsegers11/Spidavisuals/edit/main/admin.html
+Zoek deze regel:
+  const ADMIN_PASSWORD_HASH = 'oude_hash_hier';
+Vervang door:
+  const ADMIN_PASSWORD_HASH = '${newHash}';
+Commit. Klaar — Netlify deployt binnen 1 min.
+
+═══════════════════════════════
+Datum: ${new Date().toLocaleString('nl-NL')}
+Browser: ${navigator.userAgent.split(') ')[0].split(' (')[1] || 'onbekend'}
+
+⚠️ Heb jij deze wijziging NIET zelf gedaan? Iemand heeft toegang tot je admin. Wijzig direct opnieuw of neem contact op met de developer.`;
+
+  if (window.emailjs && EMAILJS_CONFIG.publicKey) {
+    try {
+      await emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
+        from_name: 'Wachtwoord Wijziging',
+        from_email: 'Spidabuissnes@hotmail.com',
+        message: emailBody,
+        source: '🔐 Beveiliging — admin wachtwoord gewijzigd'
+      });
+      status.textContent = '// ✓ WACHTWOORD GEWIJZIGD. EMAIL VERSTUURD MET INSTRUCTIES.';
+    } catch (err) {
+      // Fallback naar mailto
+      const subject = 'Admin wachtwoord wijziging — Spida Visuals';
+      window.open('mailto:Spidabuissnes@hotmail.com?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(emailBody));
+      status.textContent = '// ✓ WACHTWOORD GEWIJZIGD. MAIL-APP GEOPEND ALS BACK-UP.';
+    }
+  } else {
+    const subject = 'Admin wachtwoord wijziging — Spida Visuals';
+    window.open('mailto:Spidabuissnes@hotmail.com?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(emailBody));
+    status.textContent = '// ✓ WACHTWOORD GEWIJZIGD. MAIL-APP GEOPEND.';
+  }
+
+  e.target.reset();
+  setTimeout(() => { status.textContent = ''; }, 6000);
 });
 
 function exportData() {
