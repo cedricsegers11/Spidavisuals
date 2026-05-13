@@ -52,9 +52,7 @@
       <a href="#aanvragen" data-tab="aanvragen"><span>●</span> Nieuwe aanvragen <span class="count" id="leadCount">0</span></a>
       <a href="#afgehandeld" data-tab="afgehandeld"><span>✓</span> Afgehandeld <span class="count" id="doneCount">0</span></a>
       <a href="#chats" data-tab="chats"><span>○</span> Chatberichten <span class="count" id="chatCount">0</span></a>
-      <a href="#bezoekers" data-tab="bezoekers"><span>○</span> Bezoekers</a>
       <a href="#portfolio" data-tab="portfolio"><span>○</span> Portfolio</a>
-      <a href="#stats" data-tab="stats"><span>○</span> Statistieken</a>
     </nav>
     <div class="admin-side-foot">
       <a href="index.html" class="admin-side-link">↗ Bekijk website</a>
@@ -147,13 +145,39 @@
         </div>
       </div>
 
-      <!-- RECENT -->
+      <!-- TYPE PROJECT + CONVERSIE FUNNEL -->
+      <div class="admin-grid-2">
+        <div class="admin-panel">
+          <div class="admin-panel-head">
+            <h2>Type project</h2>
+            <span class="admin-panel-sub">Welke diensten worden aangevraagd</span>
+          </div>
+          <div class="source-list" id="serviceList"></div>
+        </div>
+        <div class="admin-panel">
+          <div class="admin-panel-head">
+            <h2>Conversie funnel</h2>
+            <span class="admin-panel-sub">Van bezoek naar afgehandeld</span>
+          </div>
+          <div class="funnel" id="funnel"></div>
+        </div>
+      </div>
+
+      <!-- RECENT AANVRAGEN -->
       <div class="admin-panel">
         <div class="admin-panel-head">
           <h2>Recente aanvragen</h2>
           <a href="#aanvragen" class="admin-link" data-tab="aanvragen">Alles bekijken →</a>
         </div>
         <div class="leads-table" id="recentLeads"></div>
+      </div>
+
+      <!-- Hidden orphan elements voor JS compatibiliteit (rendered maar niet getoond) -->
+      <div style="display:none">
+        <div id="pagesList"></div>
+        <svg id="visitsChart"></svg>
+        <div id="referrersList"></div>
+        <div id="budgetList"></div>
       </div>
     </section>
 
@@ -191,39 +215,6 @@
           <span class="admin-panel-sub">Vragen waar de bot geen antwoord op had en die naar mail zijn doorgestuurd</span>
         </div>
         <div class="chats-list" id="chatsList"></div>
-      </div>
-    </section>
-
-    <!-- BEZOEKERS TAB -->
-    <section class="admin-tab" id="tabBezoekers" style="display:none">
-      <div class="info-banner">
-        <strong>ℹ Beperking</strong>
-        Bezoeken worden lokaal in deze browser opgeslagen. Voor échte cross-device statistieken (alle bezoekers van alle apparaten) kan je later <a href="https://www.goatcounter.com" target="_blank">GoatCounter</a> of <a href="https://plausible.io" target="_blank">Plausible</a> toevoegen — gratis, één script-tag.
-      </div>
-      <div class="admin-grid-2">
-        <div class="admin-panel">
-          <div class="admin-panel-head">
-            <h2>Bezoeken per pagina</h2>
-            <span class="admin-panel-sub">Welke pagina's bekijken bezoekers</span>
-          </div>
-          <div class="source-list" id="pagesList"></div>
-        </div>
-        <div class="admin-panel">
-          <div class="admin-panel-head">
-            <h2>Bezoeken per dag</h2>
-            <span class="admin-panel-sub">Laatste 14 dagen</span>
-          </div>
-          <div class="chart-wrap">
-            <svg id="visitsChart" viewBox="0 0 600 240" preserveAspectRatio="xMidYMid meet"></svg>
-          </div>
-        </div>
-      </div>
-      <div class="admin-panel">
-        <div class="admin-panel-head">
-          <h2>Verwijzingen</h2>
-          <span class="admin-panel-sub">Waar komen bezoekers vandaan</span>
-        </div>
-        <div class="source-list" id="referrersList"></div>
       </div>
     </section>
 
@@ -265,6 +256,17 @@
             <span>Beschrijving (kort)</span>
             <textarea id="pfDesc" rows="2" placeholder="Korte 1-zin omschrijving van het project."></textarea>
           </label>
+
+          <label>
+            <span>Thumbnail (optioneel)</span>
+            <input type="url" id="pfThumb" placeholder="Plak hier een afbeelding-URL (bv. van imgbb.com)" />
+          </label>
+          <label class="thumb-upload-label">
+            <span>… of upload een afbeelding van je computer</span>
+            <input type="file" id="pfThumbFile" accept="image/*" />
+          </label>
+          <div id="pfThumbPreview" class="thumb-preview" style="display:none"></div>
+
           <button type="submit" class="btn btn-primary">+ Item toevoegen</button>
           <p class="form-status" id="pfStatus" aria-live="polite"></p>
         </form>
@@ -279,33 +281,6 @@
           </div>
         </div>
         <div id="pfList"></div>
-      </div>
-    </section>
-
-    <!-- STATS TAB -->
-    <section class="admin-tab" id="tabStats" style="display:none">
-      <div class="admin-grid-2">
-        <div class="admin-panel">
-          <div class="admin-panel-head">
-            <h2>Type project</h2>
-            <span class="admin-panel-sub">Welke diensten worden aangevraagd</span>
-          </div>
-          <div class="source-list" id="serviceList"></div>
-        </div>
-        <div class="admin-panel">
-          <div class="admin-panel-head">
-            <h2>Budget verdeling</h2>
-            <span class="admin-panel-sub">Indicatieve budgetten</span>
-          </div>
-          <div class="source-list" id="budgetList"></div>
-        </div>
-      </div>
-      <div class="admin-panel">
-        <div class="admin-panel-head">
-          <h2>Conversie funnel</h2>
-          <span class="admin-panel-sub">Status van leads</span>
-        </div>
-        <div class="funnel" id="funnel"></div>
       </div>
     </section>
 
@@ -450,13 +425,11 @@ function renderTime() {
 function switchTab(name) {
   document.querySelectorAll('.admin-tab').forEach(t => t.style.display = 'none');
   const titles = {
-    dashboard:   'Overzicht',
+    dashboard:   'Dashboard',
     aanvragen:   'Nieuwe aanvragen',
     afgehandeld: 'Afgehandelde aanvragen',
     chats:       'Chatbot berichten',
-    bezoekers:   'Bezoekers',
-    portfolio:   'Portfolio beheren',
-    stats:       'Statistieken'
+    portfolio:   'Portfolio beheren'
   };
   document.getElementById('pageTitle').textContent = titles[name] || 'Admin';
   const target = document.getElementById('tab' + name.charAt(0).toUpperCase() + name.slice(1));
@@ -890,14 +863,17 @@ function renderPortfolioList() {
     return;
   }
   list.innerHTML = items.map((it, idx) => `
-    <div class="my-req-row">
-      <div>
+    <div class="pf-item">
+      <div class="pf-thumb">
+        ${it.thumb ? `<img src="${escapeAttr(it.thumb)}" alt="" loading="lazy" />` : `<div class="pf-thumb-empty pf-thumb--${it.platform}">${it.platform.toUpperCase()}</div>`}
+      </div>
+      <div class="pf-info">
         <div class="mono small mute">${it.platform.toUpperCase()} · ${escapeHtml(it.tag||'')}</div>
         <h4>${escapeHtml(it.title)}</h4>
         ${it.desc ? `<p>${escapeHtml(it.desc)}</p>` : ''}
-        <a href="${escapeAttr(it.url)}" target="_blank" rel="noopener" class="mono small" style="color:var(--text-3);text-decoration:underline;word-break:break-all">${escapeHtml(it.url)}</a>
+        <a href="${escapeAttr(it.url)}" target="_blank" rel="noopener" class="mono small pf-url">${escapeHtml(it.url)}</a>
       </div>
-      <button class="btn btn-ghost btn-danger" data-pf-del="${idx}" type="button">Verwijder</button>
+      <button class="btn btn-ghost btn-danger pf-del-btn" data-pf-del="${idx}" type="button">🗑 Verwijder</button>
     </div>
   `).join('');
   list.querySelectorAll('[data-pf-del]').forEach(btn => {
@@ -911,6 +887,40 @@ function renderPortfolioList() {
   });
 }
 
+/* Thumbnail upload — leest bestand als data URI */
+let pendingThumbDataUri = null;
+document.getElementById('pfThumbFile')?.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  // Limit ~500KB to vermijden localStorage overflow
+  if (file.size > 500 * 1024) {
+    alert('Afbeelding is groter dan 500KB. Upload eerst naar imgbb.com en plak de URL hierboven.');
+    e.target.value = '';
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    pendingThumbDataUri = ev.target.result;
+    document.getElementById('pfThumb').value = ''; // clear URL field
+    const preview = document.getElementById('pfThumbPreview');
+    preview.style.display = 'block';
+    preview.innerHTML = `<img src="${pendingThumbDataUri}" alt="Preview" /><span class="mono small">Preview geladen</span>`;
+  };
+  reader.readAsDataURL(file);
+});
+document.getElementById('pfThumb')?.addEventListener('input', () => {
+  pendingThumbDataUri = null;
+  document.getElementById('pfThumbFile').value = '';
+  const url = document.getElementById('pfThumb').value.trim();
+  const preview = document.getElementById('pfThumbPreview');
+  if (url) {
+    preview.style.display = 'block';
+    preview.innerHTML = `<img src="${url}" alt="Preview" /><span class="mono small">URL preview</span>`;
+  } else {
+    preview.style.display = 'none';
+  }
+});
+
 document.getElementById('portfolioForm')?.addEventListener('submit', (e) => {
   e.preventDefault();
   const platform = document.getElementById('pfPlatform').value;
@@ -918,13 +928,18 @@ document.getElementById('portfolioForm')?.addEventListener('submit', (e) => {
   const url = document.getElementById('pfUrl').value.trim();
   const title = document.getElementById('pfTitle').value.trim();
   const desc = document.getElementById('pfDesc').value.trim();
+  const thumbUrl = document.getElementById('pfThumb').value.trim();
+  const thumb = thumbUrl || pendingThumbDataUri || '';
   const status = document.getElementById('pfStatus');
   if (!platform || !url || !title || !tag) { status.textContent = '// Vul alle verplichte velden in'; return; }
   const arr = loadPortfolio();
-  arr.push({ id: Date.now().toString(36), platform, tag, url, title, desc });
+  arr.push({ id: Date.now().toString(36), platform, tag, url, title, desc, thumb });
   savePortfolio(arr);
   status.textContent = '// ✓ Item toegevoegd';
   e.target.reset();
+  pendingThumbDataUri = null;
+  document.getElementById('pfThumbPreview').style.display = 'none';
+  document.getElementById('pfThumbPreview').innerHTML = '';
   renderPortfolioList();
   setTimeout(() => { status.textContent = ''; }, 1800);
 });
@@ -953,9 +968,14 @@ document.getElementById('pfExportHtml')?.addEventListener('click', () => {
   const html = items.map(it => {
     const p = PLATFORM_CLASS[it.platform];
     const ytId = it.platform === 'youtube' ? (ytIdMatch(it.url) || [])[1] : null;
-    const thumb = ytId
-      ? `<img class="work-thumb-img" src="https://img.youtube.com/vi/${ytId}/hqdefault.jpg" alt="" loading="lazy" />`
-      : `<div class="work-thumb work-thumb--${p}"></div>`;
+    let thumb;
+    if (it.thumb) {
+      thumb = `<img class="work-thumb-img" src="${it.thumb}" alt="" loading="lazy" />`;
+    } else if (ytId) {
+      thumb = `<img class="work-thumb-img" src="https://img.youtube.com/vi/${ytId}/hqdefault.jpg" alt="" loading="lazy" />`;
+    } else {
+      thumb = `<div class="work-thumb work-thumb--${p}"></div>`;
+    }
     return `<a class="work-item" data-platform="${it.platform}" href="${it.url}" target="_blank" rel="noopener">
   ${thumb}
   <span class="work-platform work-platform--${p}">${ICONS[it.platform]} ${PLATFORM_NAME[it.platform]}</span>
