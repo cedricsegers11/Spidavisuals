@@ -557,6 +557,33 @@ body.is-logged-in .nav-account{display:none}
   word-break:break-all;font-size:11px;
 }
 .pf-del-btn{align-self:flex-start}
+.pf-locked{
+  color:var(--text-3);padding:8px 14px;
+  border:1px dashed var(--line);border-radius:var(--r-sm);
+  align-self:flex-start;white-space:nowrap;
+}
+.pf-status-row{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px;
+}
+.pf-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  font-family:var(--font-mono);font-size:10.5px;
+  padding:3px 9px;border-radius:999px;
+  letter-spacing:.06em;font-weight:500;
+}
+.pf-badge--live{
+  color:var(--teal);background:var(--teal-soft);
+  border:1px solid rgba(255,255,255,0.2);
+}
+.pf-badge--draft{
+  color:#fbbf24;background:rgba(251,191,36,0.08);
+  border:1px solid rgba(251,191,36,0.3);
+}
+.pf-item--live{opacity:.92}
+.pf-item--draft{
+  background:rgba(251,191,36,0.04);
+  margin:0 -16px;padding:16px;border-radius:var(--r-sm);
+}
 
 /* Thumb upload preview */
 .thumb-upload-label input[type="file"]{

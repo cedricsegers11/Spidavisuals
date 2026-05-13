@@ -221,8 +221,10 @@
     <!-- PORTFOLIO TAB -->
     <section class="admin-tab" id="tabPortfolio" style="display:none">
       <div class="info-banner">
-        <strong>ℹ Hoe het werkt</strong>
-        Voeg hier portfolio-items toe. Ze worden lokaal opgeslagen en getoond op de werk-pagina (in deze browser). Voor productie-deploy: klik <strong>"Exporteer JSON"</strong> en stuur het bestand naar je developer, of plak de HTML-snippet rechtstreeks in werk.html.
+        <strong>ℹ Hoe portfolio werkt</strong>
+        <span class="pf-badge pf-badge--live" style="display:inline-block;margin:0 4px">✓ Live</span> items staan al op de website (in werk.html en index.html).
+        <span class="pf-badge pf-badge--draft" style="display:inline-block;margin:0 4px">● Concept</span> items zijn lokaal toegevoegd via dit formulier.
+        Voor concept items live te zetten: klik <strong>"Exporteer HTML-snippets"</strong>, kopieer de code, en plak in werk.html via GitHub.com — Netlify deployt automatisch binnen 1 min.
       </div>
 
       <div class="admin-panel">
@@ -274,7 +276,10 @@
 
       <div class="admin-panel">
         <div class="admin-panel-head">
-          <h2>Huidige items</h2>
+          <div>
+            <h2>Alle portfolio items</h2>
+            <span class="admin-panel-sub" id="pfCount">0 live · 0 concept</span>
+          </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <button class="btn btn-ghost" id="pfExport">⤓ Exporteer JSON</button>
             <button class="btn btn-ghost" id="pfExportHtml">⤓ Exporteer HTML-snippets</button>
@@ -296,6 +301,19 @@
 </div>
 
 <script>
+/* ==================== URL-KEY CHECK (privacy laag 1) ==================== */
+/* Zonder de juiste ?k=... parameter zien bezoekers een 404-pagina.
+   Verander de SECRET_KEY waarde hieronder voor extra veiligheid.
+   Spida bookmarked de URL inclusief deze parameter: admin.html?k=spida2026 */
+const SECRET_URL_KEY = 'spida2026';
+(function urlKeyGuard() {
+  const params = new URLSearchParams(location.search);
+  if (params.get('k') !== SECRET_URL_KEY) {
+    document.documentElement.innerHTML = '';
+    location.replace('404.html');
+  }
+})();
+
 /* ==================== ADMIN LOGIC ==================== */
 
 /* ============================================
@@ -846,6 +864,21 @@ function renderFunnel(leads) {
 }
 
 /* ========== PORTFOLIO MANAGEMENT ========== */
+/* DEFAULT_PORTFOLIO = items die al in werk.html en index.html staan (hardcoded, live).
+   Niet bewerkbaar/verwijderbaar vanuit admin — alleen ter overzicht.
+   Voor wijzigingen op live items: pas werk.html / index.html aan + push. */
+const DEFAULT_PORTFOLIO = [
+  { platform:'youtube', tag:'Long Form · Edit', url:'https://youtu.be/HzdrSRrUnKo', title:'YouTube edit · #1', desc:'Long form content uitgewerkt met pacing, color en sound.' },
+  { platform:'youtube', tag:'YouTube · Showcase', url:'https://youtu.be/mXHcd78MsoM', title:'YouTube edit · #2', desc:'Cinematic montage met motion accents en sound design.' },
+  { platform:'youtube', tag:'YouTube · Edit', url:'https://youtu.be/2jcbBs2dzus', title:'YouTube edit · #3', desc:'Long form project met motion accents en color treatment.' },
+  { platform:'instagram', tag:'Reel · @icemanvieze', url:'https://www.instagram.com/reel/DSxJINUDRd1/', title:'ICE — Bedankje 2025', desc:'Stage performance bedankje, gemonteerd voor Reels.' },
+  { platform:'tiktok', tag:'Horeca · @eetcafedehoek', url:'https://vm.tiktok.com/ZGdmynoNd/', title:'Café De Hoek — Behind the Scenes', desc:'CAG-Döner BTS edit voor TikTok.' },
+  { platform:'tiktok', tag:'TikTok · Vertical', url:'https://vm.tiktok.com/ZGdHf7XAU/', title:'TikTok edit · #2', desc:'Hook in seconde één — daarna pacing die kijkers vasthoudt.' },
+  { platform:'tiktok', tag:'TikTok · @jesuissnasser', url:'https://www.tiktok.com/@jesuissnasser/video/7617491019231218976', title:'TikTok edit · #3', desc:'Verticale edit met scroll-stopping opening en sterke pacing.' },
+  { platform:'tiktok', tag:'TikTok · @ytdialo', url:'https://www.tiktok.com/@ytdialo/video/7637918526531063062', title:'TikTok edit · #4', desc:'Verticale edit met sterke pacing en hook in seconde één.' },
+  { platform:'tiktok', tag:'Automotive · @kbgcustomz', url:'https://www.tiktok.com/@kbgcustomz', title:'KGB Customs — TikTok Opnamen', desc:'On-set camera-werk en opnamen voor automotive customizer KGB Customs.' }
+];
+
 function loadPortfolio() {
   try { return JSON.parse(localStorage.getItem(STORAGE_PORTFOLIO) || '[]'); }
   catch { return []; }
@@ -853,38 +886,64 @@ function loadPortfolio() {
 function savePortfolio(items) {
   localStorage.setItem(STORAGE_PORTFOLIO, JSON.stringify(items));
 }
+function allPortfolioItems() {
+  return [
+    ...DEFAULT_PORTFOLIO.map(it => ({ ...it, _source: 'live' })),
+    ...loadPortfolio().map(it => ({ ...it, _source: 'draft' }))
+  ];
+}
 
 function renderPortfolioList() {
-  const items = loadPortfolio();
+  const items = allPortfolioItems();
   const list = document.getElementById('pfList');
   if (!list) return;
   if (!items.length) {
-    list.innerHTML = '<div class="empty-state">Nog geen items toegevoegd. Vul het formulier hierboven in om te beginnen.</div>';
+    list.innerHTML = '<div class="empty-state">Geen portfolio items.</div>';
     return;
   }
-  list.innerHTML = items.map((it, idx) => `
-    <div class="pf-item">
+  // Custom item indices for delete button (only custom, not default)
+  let customIdx = -1;
+  list.innerHTML = items.map((it) => {
+    const isDraft = it._source === 'draft';
+    if (isDraft) customIdx++;
+    const statusBadge = isDraft
+      ? '<span class="pf-badge pf-badge--draft">● Concept</span>'
+      : '<span class="pf-badge pf-badge--live">✓ Live op website</span>';
+    const delBtn = isDraft
+      ? `<button class="btn btn-ghost btn-danger pf-del-btn" data-pf-del="${customIdx}" type="button">🗑 Verwijder</button>`
+      : `<span class="pf-locked mono small">🔒 In code</span>`;
+    return `
+    <div class="pf-item ${isDraft ? 'pf-item--draft' : 'pf-item--live'}">
       <div class="pf-thumb">
         ${it.thumb ? `<img src="${escapeAttr(it.thumb)}" alt="" loading="lazy" />` : `<div class="pf-thumb-empty pf-thumb--${it.platform}">${it.platform.toUpperCase()}</div>`}
       </div>
       <div class="pf-info">
-        <div class="mono small mute">${it.platform.toUpperCase()} · ${escapeHtml(it.tag||'')}</div>
+        <div class="pf-status-row">
+          ${statusBadge}
+          <span class="mono small mute">${it.platform.toUpperCase()} · ${escapeHtml(it.tag||'')}</span>
+        </div>
         <h4>${escapeHtml(it.title)}</h4>
         ${it.desc ? `<p>${escapeHtml(it.desc)}</p>` : ''}
         <a href="${escapeAttr(it.url)}" target="_blank" rel="noopener" class="mono small pf-url">${escapeHtml(it.url)}</a>
       </div>
-      <button class="btn btn-ghost btn-danger pf-del-btn" data-pf-del="${idx}" type="button">🗑 Verwijder</button>
+      ${delBtn}
     </div>
-  `).join('');
+  `;
+  }).join('');
   list.querySelectorAll('[data-pf-del]').forEach(btn => {
     btn.addEventListener('click', () => {
-      if (!confirm('Item verwijderen?')) return;
+      if (!confirm('Concept-item verwijderen?')) return;
       const arr = loadPortfolio();
       arr.splice(parseInt(btn.dataset.pfDel, 10), 1);
       savePortfolio(arr);
       renderPortfolioList();
     });
   });
+  // Counts
+  const drafts = items.filter(i => i._source === 'draft').length;
+  const live = items.filter(i => i._source === 'live').length;
+  const counter = document.getElementById('pfCount');
+  if (counter) counter.textContent = `${live} live · ${drafts} concept`;
 }
 
 /* Thumbnail upload — leest bestand als data URI */
@@ -956,7 +1015,7 @@ document.getElementById('pfExport')?.addEventListener('click', () => {
 
 document.getElementById('pfExportHtml')?.addEventListener('click', () => {
   const items = loadPortfolio();
-  if (!items.length) { alert('Geen items om te exporteren.'); return; }
+  if (!items.length) { alert('Geen concept-items om te exporteren. Voeg eerst items toe via het formulier hierboven.'); return; }
   const ICONS = {
     youtube: '<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M23 12s0-3.5-.5-5.2c-.3-1-1-1.7-2-2C18.8 4.5 12 4.5 12 4.5s-6.8 0-8.5.3c-1 .3-1.7 1-2 2C1 8.5 1 12 1 12s0 3.5.5 5.2c.3 1 1 1.7 2 2 1.7.3 8.5.3 8.5.3s6.8 0 8.5-.3c1-.3 1.7-1 2-2 .5-1.7.5-5.2.5-5.2zM10 15.5v-7l6 3.5-6 3.5z"/></svg>',
     tiktok: '<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5.8 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.84-.1z"/></svg>',
