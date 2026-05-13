@@ -301,27 +301,51 @@
 </div>
 
 <script>
-/* ==================== URL-KEY CHECK (privacy laag 1) ==================== */
-/* Zonder de juiste ?k=... parameter zien bezoekers een 404-pagina.
-   Verander de SECRET_KEY waarde hieronder voor extra veiligheid.
-   Spida bookmarked de URL inclusief deze parameter: admin.html?k=spida2026 */
+/* ==================== URL-KEY CHECK (laag 1) ==================== */
+/* Zonder ?k=... parameter → directe redirect naar 404.
+   Geen "admin" in zicht — bezoeker ziet exact dezelfde 404 als bij dode link. */
 const SECRET_URL_KEY = 'spida2026';
 (function urlKeyGuard() {
   const params = new URLSearchParams(location.search);
   if (params.get('k') !== SECRET_URL_KEY) {
     document.documentElement.innerHTML = '';
     location.replace('404.html');
+    throw new Error('blocked');
   }
 })();
+
+/* ==================== RATE LIMITING (laag 2) ==================== */
+/* Max 5 foute pogingen → 1 uur lockout. Voorkomt brute force. */
+const ATTEMPTS_KEY = 'spida_admin_attempts';
+const LOCKOUT_MS = 60 * 60 * 1000; // 1 uur
+function getAttempts() {
+  try { return JSON.parse(localStorage.getItem(ATTEMPTS_KEY) || '{"count":0,"until":0}'); }
+  catch { return { count:0, until:0 }; }
+}
+function setAttempts(obj) { localStorage.setItem(ATTEMPTS_KEY, JSON.stringify(obj)); }
+function isLockedOut() {
+  const a = getAttempts();
+  return a.until > Date.now();
+}
+function lockoutRemaining() {
+  const a = getAttempts();
+  return Math.max(0, a.until - Date.now());
+}
 
 /* ==================== ADMIN LOGIC ==================== */
 
 /* ============================================
-   ADMIN WACHTWOORD — VERANDER NAAR EIGEN WACHTWOORD
-   Dit wachtwoord werkt op ELK apparaat (telefoon, laptop, etc.)
-   omdat het hardcoded in de code staat. Deploy opnieuw na wijzigen.
+   WACHTWOORD = SHA-256 HASH (laag 3)
+   Plain-text wachtwoord staat NIET in de code.
+   Default: hash van "spida2026" — verander met:
+   echo -n "jouwwachtwoord" | sha256sum
    ============================================ */
-const ADMIN_PASSWORD = 'spida2026';
+const ADMIN_PASSWORD_HASH = '69999ea9140725547bb937d36b96f784e63dd972e60cc80b7253b291f9977201';
+
+async function sha256(text) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
 
 const STORAGE_AUTHED    = 'spida_admin_authed';
 const STORAGE_LEADS     = 'spida_leads';
@@ -351,16 +375,36 @@ function checkAuth() {
   else showLogin();
 }
 
-loginForm.addEventListener('submit', (e) => {
+loginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
-  const p = document.getElementById('loginPass').value;
   const err = document.getElementById('loginErr');
-  if (p === ADMIN_PASSWORD) {
+
+  // Check lockout
+  if (isLockedOut()) {
+    const min = Math.ceil(lockoutRemaining() / 60000);
+    err.textContent = `// LOCKED — TRY AGAIN IN ${min} MIN`;
+    return;
+  }
+
+  const p = document.getElementById('loginPass').value;
+  const hash = await sha256(p);
+
+  if (hash === ADMIN_PASSWORD_HASH) {
     sessionStorage.setItem(STORAGE_AUTHED, '1');
+    setAttempts({ count: 0, until: 0 }); // reset op success
     err.textContent = '// TOEGANG VERLEEND';
     setTimeout(() => showDashboard(), 400);
   } else {
-    err.textContent = '// FOUT WACHTWOORD';
+    const a = getAttempts();
+    const newCount = (a.count || 0) + 1;
+    if (newCount >= 5) {
+      const until = Date.now() + LOCKOUT_MS;
+      setAttempts({ count: newCount, until });
+      err.textContent = '// TE VEEL POGINGEN — 1 UUR GEBLOKKEERD';
+    } else {
+      setAttempts({ count: newCount, until: 0 });
+      err.textContent = `// FOUT WACHTWOORD (${5 - newCount} pogingen over)`;
+    }
     document.getElementById('loginPass').value = '';
   }
 });
