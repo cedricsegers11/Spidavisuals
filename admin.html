@@ -173,12 +173,14 @@
         <div class="leads-table" id="recentLeads"></div>
       </div>
 
-      <!-- BEVEILIGING — WACHTWOORD WIJZIGEN -->
+      <!-- BEVEILIGING — WACHTWOORD WIJZIGEN MET 2-STAPS VERIFICATIE -->
       <div class="admin-panel">
         <div class="admin-panel-head">
           <h2>🔐 Beveiliging</h2>
-          <span class="admin-panel-sub">Wijzig je admin wachtwoord — alleen jij ziet het nieuwe wachtwoord</span>
+          <span class="admin-panel-sub">Wijzig je admin wachtwoord — tweestapsverificatie via email</span>
         </div>
+
+        <!-- Stap 1: nieuw wachtwoord invoeren -->
         <form id="adminPasswordForm" class="settings-form">
           <div class="settings-row">
             <label>
@@ -194,9 +196,28 @@
             <span>Bevestig nieuw wachtwoord</span>
             <input type="password" id="newAdminPass2" required minlength="8" autocomplete="new-password" placeholder="••••••••" />
           </label>
-          <button type="submit" class="btn btn-primary">Wijzig wachtwoord →</button>
+          <button type="submit" class="btn btn-primary">Stuur verificatiecode →</button>
           <p class="form-status" id="adminPassStatus" aria-live="polite"></p>
-          <p class="auth-foot-note">Je nieuwe wachtwoord wordt versleuteld opgeslagen en je krijgt een bevestiging op <strong>Spidabuissnes@hotmail.com</strong> met instructies om de wijziging cross-device te maken.</p>
+          <p class="auth-foot-note">📧 We sturen een 6-cijferige code naar <strong>Spidabuissnes@hotmail.com</strong>. Vul de code in om de wijziging te bevestigen.</p>
+        </form>
+
+        <!-- Stap 2: verificatiecode invoeren -->
+        <form id="adminPasswordVerifyForm" class="settings-form" style="display:none">
+          <div class="info-banner" style="margin-bottom:18px">
+            <strong>📧 Code verstuurd</strong>
+            Check je mail op <strong>Spidabuissnes@hotmail.com</strong> voor de 6-cijferige code.
+            <br><span id="verifyTimer" class="mono small mute"></span>
+          </div>
+          <label>
+            <span>Verificatiecode (6 cijfers)</span>
+            <input type="text" id="verifyCode" required pattern="[0-9]{6}" maxlength="6" inputmode="numeric" placeholder="123456" autocomplete="off" style="font-family:var(--font-mono);font-size:18px;letter-spacing:.4em;text-align:center" />
+          </label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button type="submit" class="btn btn-primary">Bevestig wijziging ✓</button>
+            <button type="button" class="btn btn-ghost" id="resendCodeBtn">↻ Opnieuw sturen</button>
+            <button type="button" class="btn btn-ghost" id="cancelChangeBtn">Annuleer</button>
+          </div>
+          <p class="form-status" id="adminVerifyStatus" aria-live="polite"></p>
         </form>
       </div>
 
@@ -249,10 +270,9 @@
     <!-- PORTFOLIO TAB -->
     <section class="admin-tab" id="tabPortfolio" style="display:none">
       <div class="info-banner">
-        <strong>ℹ Hoe portfolio werkt</strong>
-        Items toevoegen via het formulier hieronder gaat naar <strong>portfolio.json</strong> — de live data van werk.html.
-        Met de <strong>GitHub Token</strong> hieronder publiceer je wijzigingen automatisch (live binnen 1 min).
-        Zonder token: klik <strong>"Exporteer JSON"</strong> en plak handmatig in github.com/cedricsegers11/Spidavisuals/edit/main/portfolio.json
+        <strong>ℹ Hoe het werkt</strong>
+        Items toevoegen of verwijderen via dit paneel gaat <strong>automatisch live</strong> op de website binnen 1 minuut (mits GitHub Token is ingesteld).
+        Stel hieronder eenmalig een GitHub Token in — daarna hoef je nooit meer iets handmatig te doen.
       </div>
 
       <!-- GitHub token instellen (eenmalig) -->
@@ -1009,6 +1029,55 @@ function savePortfolioLocal() {
   localStorage.setItem(STORAGE_PORTFOLIO, JSON.stringify(portfolioItems));
 }
 
+/* Publiceer huidige portfolioItems naar GitHub → Netlify deployt automatisch.
+   Wordt automatisch aangeroepen bij add/delete. Toont status in pfPublishStatus. */
+async function publishToGitHub(silent = false) {
+  const status = document.getElementById('pfPublishStatus');
+  const token = localStorage.getItem(STORAGE_GH_TOKEN);
+  if (!token) {
+    if (!silent && status) status.textContent = '// ⚠ Geen GitHub Token — item is alleen lokaal opgeslagen. Stel token in hierboven voor auto-publish.';
+    return false;
+  }
+  if (!silent && status) status.textContent = '// PUBLICEREN NAAR LIVE SITE...';
+  try {
+    const apiUrl = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}?ref=${GH_BRANCH}`;
+    const getRes = await fetch(apiUrl, {
+      headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' }
+    });
+    if (!getRes.ok) {
+      const err = await getRes.json().catch(() => ({}));
+      throw new Error(err.message || `GitHub GET ${getRes.status}`);
+    }
+    const fileData = await getRes.json();
+    const newJson = JSON.stringify({
+      version: 1,
+      lastUpdated: new Date().toISOString(),
+      items: portfolioItems
+    }, null, 2);
+    const contentB64 = btoa(unescape(encodeURIComponent(newJson)));
+    const putRes = await fetch(apiUrl, {
+      method: 'PUT',
+      headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' },
+      body: JSON.stringify({
+        message: `Portfolio update via admin (${portfolioItems.length} items)`,
+        content: contentB64,
+        sha: fileData.sha,
+        branch: GH_BRANCH
+      })
+    });
+    if (!putRes.ok) {
+      const err = await putRes.json().catch(() => ({}));
+      throw new Error(err.message || `GitHub PUT ${putRes.status}`);
+    }
+    if (status) status.textContent = '// ✓ LIVE OP WEBSITE BINNEN 1 MIN';
+    if (!silent) setTimeout(() => { if (status.textContent.includes('LIVE')) status.textContent = ''; }, 8000);
+    return true;
+  } catch (e) {
+    if (status) status.textContent = `// ⚠ FOUT BIJ PUBLICEREN: ${e.message}`;
+    return false;
+  }
+}
+
 function renderPortfolioList() {
   const list = document.getElementById('pfList');
   if (!list) return;
@@ -1033,13 +1102,15 @@ function renderPortfolioList() {
     </div>
   `).join('');
   list.querySelectorAll('[data-pf-del]').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       const idx = parseInt(btn.dataset.pfDel, 10);
       const it = portfolioItems[idx];
-      if (!confirm(`Item "${it.title}" verwijderen?`)) return;
+      if (!confirm(`Item "${it.title}" verwijderen?\n\nWordt direct verwijderd van de live website (~1 min).`)) return;
       portfolioItems.splice(idx, 1);
       savePortfolioLocal();
       renderPortfolioList();
+      // Auto-publish naar live
+      await publishToGitHub();
     });
   });
   const counter = document.getElementById('pfCount');
@@ -1080,7 +1151,7 @@ document.getElementById('pfThumb')?.addEventListener('input', () => {
   }
 });
 
-document.getElementById('portfolioForm')?.addEventListener('submit', (e) => {
+document.getElementById('portfolioForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const platform = document.getElementById('pfPlatform').value;
   const tag = document.getElementById('pfTag').value.trim();
@@ -1093,13 +1164,15 @@ document.getElementById('portfolioForm')?.addEventListener('submit', (e) => {
   if (!platform || !url || !title || !tag) { status.textContent = '// Vul alle verplichte velden in'; return; }
   portfolioItems.push({ id: Date.now().toString(36), platform, tag, url, title, desc, thumb });
   savePortfolioLocal();
-  status.textContent = '// ✓ Toegevoegd. Klik "Publiceer naar live site" om het zichtbaar te maken voor bezoekers.';
+  status.textContent = '// ✓ Toegevoegd. Publiceren naar live site...';
   e.target.reset();
   pendingThumbDataUri = null;
   document.getElementById('pfThumbPreview').style.display = 'none';
   document.getElementById('pfThumbPreview').innerHTML = '';
   renderPortfolioList();
-  setTimeout(() => { status.textContent = ''; }, 5000);
+  // Auto-publish naar live
+  await publishToGitHub();
+  setTimeout(() => { status.textContent = ''; }, 6000);
 });
 
 /* GitHub Token opslaan */
@@ -1129,60 +1202,10 @@ document.getElementById('ghTokenClear')?.addEventListener('click', () => {
   document.getElementById('ghTokenStatusMsg').textContent = '// Token gewist';
 });
 
-/* Publiceer naar GitHub (en dus naar live site) */
+/* Handmatige re-publish knop (voor als auto-publish faalde) */
 document.getElementById('pfPublish')?.addEventListener('click', async () => {
-  const status = document.getElementById('pfPublishStatus');
-  const token = localStorage.getItem(STORAGE_GH_TOKEN);
-  if (!token) {
-    status.textContent = '// FOUT: stel eerst een GitHub Token in hierboven (zie uitleg).';
-    return;
-  }
-  if (!confirm(`Publiceer ${portfolioItems.length} items naar de live website?`)) return;
-
-  status.textContent = '// PUBLICEREN...';
-  try {
-    // 1. Haal huidige file op voor SHA
-    const apiUrl = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}?ref=${GH_BRANCH}`;
-    const getRes = await fetch(apiUrl, {
-      headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' }
-    });
-    if (!getRes.ok) {
-      const err = await getRes.json().catch(() => ({}));
-      throw new Error(err.message || `GitHub GET ${getRes.status}`);
-    }
-    const fileData = await getRes.json();
-    portfolioSha = fileData.sha;
-
-    // 2. Build new JSON
-    const newJson = JSON.stringify({
-      version: 1,
-      lastUpdated: new Date().toISOString(),
-      items: portfolioItems
-    }, null, 2);
-
-    // 3. Encode to base64 (handle Unicode)
-    const contentB64 = btoa(unescape(encodeURIComponent(newJson)));
-
-    // 4. PUT update
-    const putRes = await fetch(apiUrl, {
-      method: 'PUT',
-      headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' },
-      body: JSON.stringify({
-        message: `Portfolio update via admin (${portfolioItems.length} items)`,
-        content: contentB64,
-        sha: portfolioSha,
-        branch: GH_BRANCH
-      })
-    });
-    if (!putRes.ok) {
-      const err = await putRes.json().catch(() => ({}));
-      throw new Error(err.message || `GitHub PUT ${putRes.status}`);
-    }
-    status.textContent = '// ✓ GEPUBLICEERD! Netlify deployt nu automatisch. Live binnen 1-2 min.';
-    setTimeout(() => { status.textContent = ''; }, 10000);
-  } catch (e) {
-    status.textContent = `// FOUT: ${e.message}. Token correct? Heeft het Contents-write permissie?`;
-  }
+  if (!confirm(`Forceer publiceren van ${portfolioItems.length} items naar de live website?`)) return;
+  await publishToGitHub();
 });
 
 document.getElementById('pfExport')?.addEventListener('click', () => {
@@ -1234,7 +1257,70 @@ document.getElementById('pfExportHtml')?.addEventListener('click', () => {
     html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</pre>');
 });
 
-/* ========== WACHTWOORD WIJZIGEN ========== */
+/* ========== WACHTWOORD WIJZIGEN MET 2-STAPS EMAIL VERIFICATIE ========== */
+const PENDING_PASS_KEY = 'spida_pending_pass_change';
+const VERIFY_VALID_MS = 10 * 60 * 1000; // 10 minuten
+
+function genVerifyCode() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+async function sendVerifyCodeEmail(code, plainPass) {
+  const body = `Hoi Spida,
+
+🔐 Iemand probeert je admin wachtwoord te wijzigen.
+
+═══════════════════════════════
+VERIFICATIECODE:
+
+      ${code}
+
+═══════════════════════════════
+
+Vul deze code in het admin paneel om de wijziging te bevestigen.
+De code is 10 minuten geldig.
+
+NIEUW WACHTWOORD (na bevestiging):
+${plainPass}
+
+═══════════════════════════════
+⚠️ Heb jij dit NIET zelf gedaan?
+Negeer dit email. Zonder de code wordt het wachtwoord NIET gewijzigd. Verander dan ook direct je wachtwoord opnieuw via de admin.
+
+Datum: ${new Date().toLocaleString('nl-NL')}`;
+
+  if (window.emailjs && EMAILJS_CONFIG.publicKey) {
+    return emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
+      from_name: 'Verificatiecode',
+      from_email: 'Spidabuissnes@hotmail.com',
+      message: body,
+      source: `🔐 Verificatiecode: ${code}`
+    });
+  }
+  throw new Error('EmailJS not loaded');
+}
+
+let verifyTimerInterval = null;
+function startVerifyTimer() {
+  clearInterval(verifyTimerInterval);
+  const el = document.getElementById('verifyTimer');
+  const tick = () => {
+    const pending = JSON.parse(sessionStorage.getItem(PENDING_PASS_KEY) || 'null');
+    if (!pending) { clearInterval(verifyTimerInterval); return; }
+    const remaining = pending.expires - Date.now();
+    if (remaining <= 0) {
+      if (el) el.textContent = '⏰ Code is verlopen — vraag een nieuwe aan.';
+      clearInterval(verifyTimerInterval);
+      return;
+    }
+    const min = Math.floor(remaining / 60000);
+    const sec = Math.floor((remaining % 60000) / 1000);
+    if (el) el.textContent = `Geldig nog: ${min}:${sec.toString().padStart(2,'0')}`;
+  };
+  tick();
+  verifyTimerInterval = setInterval(tick, 1000);
+}
+
 document.getElementById('adminPasswordForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const cur = document.getElementById('curAdminPass').value;
@@ -1245,85 +1331,100 @@ document.getElementById('adminPasswordForm')?.addEventListener('submit', async (
   // Validatie
   const curHash = await sha256(cur);
   if (curHash !== getActivePasswordHash()) {
-    status.textContent = '// FOUT: huidig wachtwoord klopt niet';
-    return;
+    status.textContent = '// FOUT: huidig wachtwoord klopt niet'; return;
   }
   if (newPass !== newPass2) {
-    status.textContent = '// FOUT: nieuwe wachtwoorden komen niet overeen';
-    return;
+    status.textContent = '// FOUT: nieuwe wachtwoorden komen niet overeen'; return;
   }
   if (newPass.length < 8) {
-    status.textContent = '// FOUT: minstens 8 tekens';
-    return;
+    status.textContent = '// FOUT: minstens 8 tekens'; return;
   }
   if (newPass === cur) {
-    status.textContent = '// FOUT: nieuw wachtwoord is hetzelfde als huidig';
-    return;
+    status.textContent = '// FOUT: nieuw wachtwoord is hetzelfde als huidig'; return;
   }
 
+  // Genereer code + nieuwe hash
   const newHash = await sha256(newPass);
+  const code = genVerifyCode();
 
-  // 1. Override opslaan — werkt direct op dit apparaat
-  localStorage.setItem(STORAGE_PASS_OVERRIDE, newHash);
+  sessionStorage.setItem(PENDING_PASS_KEY, JSON.stringify({
+    newHash, code, plainPass: newPass, expires: Date.now() + VERIFY_VALID_MS
+  }));
 
-  // 2. Email versturen naar Spida via EmailJS
-  status.textContent = '// VERZENDEN...';
-
-  const emailBody = `Hoi Spida,
-
-Je hebt zojuist je admin wachtwoord gewijzigd via spidavisuals.nl/admin.html
-
-═══════════════════════════════
-🔐 JE NIEUWE WACHTWOORD (BEWAAR DIT GOED):
-
-${newPass}
-
-═══════════════════════════════
-HASH (technisch, voor code update):
-${newHash}
-
-═══════════════════════════════
-WAT WERKT NU:
-✓ Op dit apparaat (browser) werkt het nieuwe wachtwoord direct
-✗ Op andere apparaten geldt nog het oude wachtwoord
-
-CROSS-DEVICE PERMANENT MAKEN:
-Open in browser → github.com/cedricsegers11/Spidavisuals/edit/main/admin.html
-Zoek deze regel:
-  const ADMIN_PASSWORD_HASH = 'oude_hash_hier';
-Vervang door:
-  const ADMIN_PASSWORD_HASH = '${newHash}';
-Commit. Klaar — Netlify deployt binnen 1 min.
-
-═══════════════════════════════
-Datum: ${new Date().toLocaleString('nl-NL')}
-Browser: ${navigator.userAgent.split(') ')[0].split(' (')[1] || 'onbekend'}
-
-⚠️ Heb jij deze wijziging NIET zelf gedaan? Iemand heeft toegang tot je admin. Wijzig direct opnieuw of neem contact op met de developer.`;
-
-  if (window.emailjs && EMAILJS_CONFIG.publicKey) {
-    try {
-      await emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
-        from_name: 'Wachtwoord Wijziging',
-        from_email: 'Spidabuissnes@hotmail.com',
-        message: emailBody,
-        source: '🔐 Beveiliging — admin wachtwoord gewijzigd'
-      });
-      status.textContent = '// ✓ WACHTWOORD GEWIJZIGD. EMAIL VERSTUURD MET INSTRUCTIES.';
-    } catch (err) {
-      // Fallback naar mailto
-      const subject = 'Admin wachtwoord wijziging — Spida Visuals';
-      window.open('mailto:Spidabuissnes@hotmail.com?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(emailBody));
-      status.textContent = '// ✓ WACHTWOORD GEWIJZIGD. MAIL-APP GEOPEND ALS BACK-UP.';
-    }
-  } else {
-    const subject = 'Admin wachtwoord wijziging — Spida Visuals';
-    window.open('mailto:Spidabuissnes@hotmail.com?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(emailBody));
-    status.textContent = '// ✓ WACHTWOORD GEWIJZIGD. MAIL-APP GEOPEND.';
+  status.textContent = '// CODE VERZENDEN...';
+  try {
+    await sendVerifyCodeEmail(code, newPass);
+    status.textContent = '// ✓ CODE VERSTUURD NAAR SPIDABUISSNES@HOTMAIL.COM';
+    // Toon stap 2
+    document.getElementById('adminPasswordForm').style.display = 'none';
+    document.getElementById('adminPasswordVerifyForm').style.display = 'flex';
+    document.getElementById('verifyCode').focus();
+    startVerifyTimer();
+  } catch (err) {
+    status.textContent = '// FOUT: email kon niet verzonden worden — check EmailJS config';
+    sessionStorage.removeItem(PENDING_PASS_KEY);
   }
+});
 
-  e.target.reset();
-  setTimeout(() => { status.textContent = ''; }, 6000);
+document.getElementById('adminPasswordVerifyForm')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const input = document.getElementById('verifyCode').value.trim();
+  const status = document.getElementById('adminVerifyStatus');
+  const pendingRaw = sessionStorage.getItem(PENDING_PASS_KEY);
+  if (!pendingRaw) { status.textContent = '// FOUT: geen openstaande wijziging'; return; }
+  const pending = JSON.parse(pendingRaw);
+  if (Date.now() > pending.expires) {
+    status.textContent = '// FOUT: code is verlopen — vraag een nieuwe aan'; return;
+  }
+  if (input !== pending.code) {
+    status.textContent = '// FOUT: code is niet correct'; return;
+  }
+  // Verificatie OK — pas wachtwoord toe
+  localStorage.setItem(STORAGE_PASS_OVERRIDE, pending.newHash);
+  sessionStorage.removeItem(PENDING_PASS_KEY);
+  clearInterval(verifyTimerInterval);
+  status.textContent = '// ✓ WACHTWOORD SUCCESVOL GEWIJZIGD';
+  // Reset forms
+  setTimeout(() => {
+    document.getElementById('adminPasswordVerifyForm').style.display = 'none';
+    document.getElementById('adminPasswordVerifyForm').reset();
+    document.getElementById('adminPasswordForm').style.display = 'flex';
+    document.getElementById('adminPasswordForm').reset();
+    document.getElementById('adminPassStatus').textContent = '';
+    status.textContent = '';
+  }, 3000);
+});
+
+document.getElementById('resendCodeBtn')?.addEventListener('click', async () => {
+  const status = document.getElementById('adminVerifyStatus');
+  const pendingRaw = sessionStorage.getItem(PENDING_PASS_KEY);
+  if (!pendingRaw) { status.textContent = '// FOUT: geen openstaande wijziging'; return; }
+  const pending = JSON.parse(pendingRaw);
+  // Nieuwe code, nieuwe expiry
+  const code = genVerifyCode();
+  pending.code = code;
+  pending.expires = Date.now() + VERIFY_VALID_MS;
+  sessionStorage.setItem(PENDING_PASS_KEY, JSON.stringify(pending));
+  status.textContent = '// VERZENDEN...';
+  try {
+    await sendVerifyCodeEmail(code, pending.plainPass);
+    status.textContent = '// ✓ NIEUWE CODE VERSTUURD';
+    startVerifyTimer();
+    setTimeout(() => { status.textContent = ''; }, 3000);
+  } catch (err) {
+    status.textContent = '// FOUT: email kon niet verzonden worden';
+  }
+});
+
+document.getElementById('cancelChangeBtn')?.addEventListener('click', () => {
+  sessionStorage.removeItem(PENDING_PASS_KEY);
+  clearInterval(verifyTimerInterval);
+  document.getElementById('adminPasswordVerifyForm').style.display = 'none';
+  document.getElementById('adminPasswordVerifyForm').reset();
+  document.getElementById('adminPasswordForm').style.display = 'flex';
+  document.getElementById('adminPasswordForm').reset();
+  document.getElementById('adminPassStatus').textContent = '';
+  document.getElementById('adminVerifyStatus').textContent = '';
 });
 
 function exportData() {
