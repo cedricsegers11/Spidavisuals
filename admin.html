@@ -53,6 +53,7 @@
       <a href="#afgehandeld" data-tab="afgehandeld"><span>✓</span> Afgehandeld <span class="count" id="doneCount">0</span></a>
       <a href="#chats" data-tab="chats"><span>○</span> Chatberichten <span class="count" id="chatCount">0</span></a>
       <a href="#bezoekers" data-tab="bezoekers"><span>○</span> Bezoekers</a>
+      <a href="#portfolio" data-tab="portfolio"><span>○</span> Portfolio</a>
       <a href="#stats" data-tab="stats"><span>○</span> Statistieken</a>
     </nav>
     <div class="admin-side-foot">
@@ -226,6 +227,61 @@
       </div>
     </section>
 
+    <!-- PORTFOLIO TAB -->
+    <section class="admin-tab" id="tabPortfolio" style="display:none">
+      <div class="info-banner">
+        <strong>ℹ Hoe het werkt</strong>
+        Voeg hier portfolio-items toe. Ze worden lokaal opgeslagen en getoond op de werk-pagina (in deze browser). Voor productie-deploy: klik <strong>"Exporteer JSON"</strong> en stuur het bestand naar je developer, of plak de HTML-snippet rechtstreeks in werk.html.
+      </div>
+
+      <div class="admin-panel">
+        <div class="admin-panel-head">
+          <h2>Nieuw item toevoegen</h2>
+        </div>
+        <form id="portfolioForm" class="settings-form">
+          <div class="settings-row">
+            <label>
+              <span>Platform</span>
+              <select id="pfPlatform" required>
+                <option value="youtube">YouTube</option>
+                <option value="tiktok">TikTok</option>
+                <option value="instagram">Instagram</option>
+              </select>
+            </label>
+            <label>
+              <span>Tag (label op kaartje)</span>
+              <input type="text" id="pfTag" placeholder="bv. Reel · @clientname" required />
+            </label>
+          </div>
+          <label>
+            <span>URL</span>
+            <input type="url" id="pfUrl" placeholder="https://youtu.be/... of https://vm.tiktok.com/..." required />
+          </label>
+          <label>
+            <span>Titel</span>
+            <input type="text" id="pfTitle" placeholder="bv. KGB Customs — On-set" required />
+          </label>
+          <label>
+            <span>Beschrijving (kort)</span>
+            <textarea id="pfDesc" rows="2" placeholder="Korte 1-zin omschrijving van het project."></textarea>
+          </label>
+          <button type="submit" class="btn btn-primary">+ Item toevoegen</button>
+          <p class="form-status" id="pfStatus" aria-live="polite"></p>
+        </form>
+      </div>
+
+      <div class="admin-panel">
+        <div class="admin-panel-head">
+          <h2>Huidige items</h2>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-ghost" id="pfExport">⤓ Exporteer JSON</button>
+            <button class="btn btn-ghost" id="pfExportHtml">⤓ Exporteer HTML-snippets</button>
+          </div>
+        </div>
+        <div id="pfList"></div>
+      </div>
+    </section>
+
     <!-- STATS TAB -->
     <section class="admin-tab" id="tabStats" style="display:none">
       <div class="admin-grid-2">
@@ -274,9 +330,10 @@
    ============================================ */
 const ADMIN_PASSWORD = 'spida2026';
 
-const STORAGE_AUTHED = 'spida_admin_authed';
-const STORAGE_LEADS  = 'spida_leads';
-const STORAGE_VISITS = 'spida_visits';
+const STORAGE_AUTHED    = 'spida_admin_authed';
+const STORAGE_LEADS     = 'spida_leads';
+const STORAGE_VISITS    = 'spida_visits';
+const STORAGE_PORTFOLIO = 'spida_portfolio';
 
 const authWrap = document.getElementById('authWrap');
 const adminShell = document.getElementById('adminShell');
@@ -398,6 +455,7 @@ function switchTab(name) {
     afgehandeld: 'Afgehandelde aanvragen',
     chats:       'Chatbot berichten',
     bezoekers:   'Bezoekers',
+    portfolio:   'Portfolio beheren',
     stats:       'Statistieken'
   };
   document.getElementById('pageTitle').textContent = titles[name] || 'Admin';
@@ -423,6 +481,7 @@ function refreshAll() {
   renderPagesList(visits);
   renderVisitsChart(visits);
   renderReferrers(visits);
+  renderPortfolioList();
 
   // Counters
   const newCount  = leads.filter(l => l.status !== 'done').length;
@@ -812,6 +871,107 @@ function renderFunnel(leads) {
   `;
   document.getElementById('funnel').innerHTML = html;
 }
+
+/* ========== PORTFOLIO MANAGEMENT ========== */
+function loadPortfolio() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_PORTFOLIO) || '[]'); }
+  catch { return []; }
+}
+function savePortfolio(items) {
+  localStorage.setItem(STORAGE_PORTFOLIO, JSON.stringify(items));
+}
+
+function renderPortfolioList() {
+  const items = loadPortfolio();
+  const list = document.getElementById('pfList');
+  if (!list) return;
+  if (!items.length) {
+    list.innerHTML = '<div class="empty-state">Nog geen items toegevoegd. Vul het formulier hierboven in om te beginnen.</div>';
+    return;
+  }
+  list.innerHTML = items.map((it, idx) => `
+    <div class="my-req-row">
+      <div>
+        <div class="mono small mute">${it.platform.toUpperCase()} · ${escapeHtml(it.tag||'')}</div>
+        <h4>${escapeHtml(it.title)}</h4>
+        ${it.desc ? `<p>${escapeHtml(it.desc)}</p>` : ''}
+        <a href="${escapeAttr(it.url)}" target="_blank" rel="noopener" class="mono small" style="color:var(--text-3);text-decoration:underline;word-break:break-all">${escapeHtml(it.url)}</a>
+      </div>
+      <button class="btn btn-ghost btn-danger" data-pf-del="${idx}" type="button">Verwijder</button>
+    </div>
+  `).join('');
+  list.querySelectorAll('[data-pf-del]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (!confirm('Item verwijderen?')) return;
+      const arr = loadPortfolio();
+      arr.splice(parseInt(btn.dataset.pfDel, 10), 1);
+      savePortfolio(arr);
+      renderPortfolioList();
+    });
+  });
+}
+
+document.getElementById('portfolioForm')?.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const platform = document.getElementById('pfPlatform').value;
+  const tag = document.getElementById('pfTag').value.trim();
+  const url = document.getElementById('pfUrl').value.trim();
+  const title = document.getElementById('pfTitle').value.trim();
+  const desc = document.getElementById('pfDesc').value.trim();
+  const status = document.getElementById('pfStatus');
+  if (!platform || !url || !title || !tag) { status.textContent = '// Vul alle verplichte velden in'; return; }
+  const arr = loadPortfolio();
+  arr.push({ id: Date.now().toString(36), platform, tag, url, title, desc });
+  savePortfolio(arr);
+  status.textContent = '// ✓ Item toegevoegd';
+  e.target.reset();
+  renderPortfolioList();
+  setTimeout(() => { status.textContent = ''; }, 1800);
+});
+
+document.getElementById('pfExport')?.addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(loadPortfolio(), null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'spida-portfolio.json';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById('pfExportHtml')?.addEventListener('click', () => {
+  const items = loadPortfolio();
+  if (!items.length) { alert('Geen items om te exporteren.'); return; }
+  const ICONS = {
+    youtube: '<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M23 12s0-3.5-.5-5.2c-.3-1-1-1.7-2-2C18.8 4.5 12 4.5 12 4.5s-6.8 0-8.5.3c-1 .3-1.7 1-2 2C1 8.5 1 12 1 12s0 3.5.5 5.2c.3 1 1 1.7 2 2 1.7.3 8.5.3 8.5.3s6.8 0 8.5-.3c1-.3 1.7-1 2-2 .5-1.7.5-5.2.5-5.2zM10 15.5v-7l6 3.5-6 3.5z"/></svg>',
+    tiktok: '<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5.8 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.84-.1z"/></svg>',
+    instagram: '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.1" fill="currentColor" stroke="none"/></svg>'
+  };
+  const PLATFORM_CLASS = { youtube: 'yt', tiktok: 'tt', instagram: 'ig' };
+  const PLATFORM_NAME = { youtube: 'YouTube', tiktok: 'TikTok', instagram: 'Instagram' };
+  const ytIdMatch = (url) => url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/))([\w-]{11})/);
+  const html = items.map(it => {
+    const p = PLATFORM_CLASS[it.platform];
+    const ytId = it.platform === 'youtube' ? (ytIdMatch(it.url) || [])[1] : null;
+    const thumb = ytId
+      ? `<img class="work-thumb-img" src="https://img.youtube.com/vi/${ytId}/hqdefault.jpg" alt="" loading="lazy" />`
+      : `<div class="work-thumb work-thumb--${p}"></div>`;
+    return `<a class="work-item" data-platform="${it.platform}" href="${it.url}" target="_blank" rel="noopener">
+  ${thumb}
+  <span class="work-platform work-platform--${p}">${ICONS[it.platform]} ${PLATFORM_NAME[it.platform]}</span>
+  <span class="play-icon"></span>
+  <div class="work-meta">
+    <span class="work-tag">${it.tag}</span>
+    <h3>${it.title}</h3>
+    ${it.desc ? `<p>${it.desc}</p>` : ''}
+  </div>
+</a>`;
+  }).join('\n\n');
+  // Toon in een dialog/popup zodat user kan kopiëren
+  const w = window.open('', '_blank');
+  w.document.write('<title>Portfolio HTML — Spida</title><pre style="font-family:monospace;font-size:12px;padding:20px;white-space:pre-wrap;word-wrap:break-word;background:#000;color:#0f0">' +
+    html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</pre>');
+});
 
 function exportData() {
   const data = {
