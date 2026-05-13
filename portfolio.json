@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "lastUpdated": "2026-05-13T22:02:11.316Z",
+  "lastUpdated": "2026-05-13T22:02:19.967Z",
   "items": [
     {
       "id": "yt1",
@@ -82,15 +82,6 @@
       "title": "Dialo Short",
       "desc": "",
       "thumb": ""
-    },
-    {
-      "id": "mp4luk3y",
-      "platform": "youtube",
-      "tag": "Spida",
-      "url": "https://youtu.be/rXbHUk4Q-Q4",
-      "title": "oefen video clips",
-      "desc": "",
-      "thumb": "https://www.youtube.com/watch?v=rXbHUk4Q-Q4"
     }
   ]
 }
