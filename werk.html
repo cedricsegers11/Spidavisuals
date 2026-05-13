@@ -315,36 +315,91 @@
 </footer>
 
 <script>
-// Filter logica voor portfolio
-(function() {
+// Portfolio: laad uit portfolio.json (dynamisch), val terug op hardcoded HTML als fetch faalt
+(async function loadPortfolio() {
+  try {
+    const res = await fetch('portfolio.json?t=' + Date.now()); // cache-bust
+    if (!res.ok) throw new Error('portfolio.json niet bereikbaar');
+    const data = await res.json();
+    if (!data.items || !data.items.length) return;
+    renderPortfolio(data.items);
+  } catch (e) {
+    // Hardcoded HTML in workGrid blijft staan als fallback
+    console.warn('portfolio.json niet geladen, hardcoded items gebruikt:', e.message);
+  }
+  initFilters();
+})();
+
+function ytId(url) {
+  const m = (url || '').match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/))([\w-]{11})/);
+  return m ? m[1] : null;
+}
+
+function renderPortfolio(items) {
+  const grid = document.getElementById('workGrid');
+  if (!grid) return;
+  const ICONS = {
+    youtube: '<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M23 12s0-3.5-.5-5.2c-.3-1-1-1.7-2-2C18.8 4.5 12 4.5 12 4.5s-6.8 0-8.5.3c-1 .3-1.7 1-2 2C1 8.5 1 12 1 12s0 3.5.5 5.2c.3 1 1 1.7 2 2 1.7.3 8.5.3 8.5.3s6.8 0 8.5-.3c1-.3 1.7-1 2-2 .5-1.7.5-5.2.5-5.2zM10 15.5v-7l6 3.5-6 3.5z"/></svg>',
+    tiktok: '<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5.8 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.84-.1z"/></svg>',
+    instagram: '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.1" fill="currentColor" stroke="none"/></svg>'
+  };
+  const PLATFORM_CLASS = { youtube: 'yt', tiktok: 'tt', instagram: 'ig' };
+  const PLATFORM_NAME  = { youtube: 'YouTube', tiktok: 'TikTok', instagram: 'Instagram' };
+
+  const escape = (s) => String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  grid.innerHTML = items.map(it => {
+    const p = PLATFORM_CLASS[it.platform] || 'tt';
+    const id = ytId(it.url);
+    let thumb;
+    if (it.thumb) {
+      thumb = `<img class="work-thumb-img" src="${escape(it.thumb)}" alt="" loading="lazy" />`;
+    } else if (id) {
+      thumb = `<img class="work-thumb-img" src="https://img.youtube.com/vi/${id}/hqdefault.jpg" alt="" loading="lazy" />`;
+    } else {
+      thumb = `<div class="work-thumb work-thumb--${p}"></div>`;
+    }
+    return `<a class="work-item" data-platform="${it.platform}" href="${escape(it.url)}" target="_blank" rel="noopener">
+${thumb}
+<span class="work-platform work-platform--${p}">${ICONS[it.platform]||''} ${PLATFORM_NAME[it.platform]||''}</span>
+<span class="play-icon"></span>
+<div class="work-meta">
+<span class="work-tag">${escape(it.tag||'')}</span>
+<h3>${escape(it.title||'')}</h3>
+${it.desc ? `<p>${escape(it.desc)}</p>` : ''}
+</div>
+</a>`;
+  }).join('');
+}
+
+function initFilters() {
   const grid = document.getElementById('workGrid');
   const filterButtons = document.querySelectorAll('.filter-chip');
   const empty = document.getElementById('emptyFilter');
   if (!grid) return;
   const items = grid.querySelectorAll('.work-item');
 
-  // Tel items per platform
   const counts = { all: items.length, youtube: 0, tiktok: 0, instagram: 0 };
   items.forEach(item => { counts[item.dataset.platform] = (counts[item.dataset.platform]||0)+1; });
-  document.getElementById('cntAll').textContent = counts.all;
-  document.getElementById('cntYt').textContent = counts.youtube;
-  document.getElementById('cntTt').textContent = counts.tiktok;
-  document.getElementById('cntIg').textContent = counts.instagram;
+  const cntAll = document.getElementById('cntAll'); if (cntAll) cntAll.textContent = counts.all;
+  const cntYt  = document.getElementById('cntYt');  if (cntYt)  cntYt.textContent  = counts.youtube;
+  const cntTt  = document.getElementById('cntTt');  if (cntTt)  cntTt.textContent  = counts.tiktok;
+  const cntIg  = document.getElementById('cntIg');  if (cntIg)  cntIg.textContent  = counts.instagram;
 
   filterButtons.forEach(btn => {
     btn.addEventListener('click', () => {
       const filter = btn.dataset.filter;
       filterButtons.forEach(b => b.classList.toggle('active', b === btn));
       let visible = 0;
-      items.forEach(item => {
+      grid.querySelectorAll('.work-item').forEach(item => {
         const show = filter === 'all' || item.dataset.platform === filter;
         item.style.display = show ? '' : 'none';
         if (show) visible++;
       });
-      empty.style.display = visible ? 'none' : 'block';
+      if (empty) empty.style.display = visible ? 'none' : 'block';
     });
   });
-})();
+}
 </script>
 <!-- Chatbot Widget -->
 <div class="chatbot" id="chatbot">

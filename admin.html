@@ -250,9 +250,40 @@
     <section class="admin-tab" id="tabPortfolio" style="display:none">
       <div class="info-banner">
         <strong>ℹ Hoe portfolio werkt</strong>
-        <span class="pf-badge pf-badge--live" style="display:inline-block;margin:0 4px">✓ Live</span> items staan al op de website (in werk.html en index.html).
-        <span class="pf-badge pf-badge--draft" style="display:inline-block;margin:0 4px">● Concept</span> items zijn lokaal toegevoegd via dit formulier.
-        Voor concept items live te zetten: klik <strong>"Exporteer HTML-snippets"</strong>, kopieer de code, en plak in werk.html via GitHub.com — Netlify deployt automatisch binnen 1 min.
+        Items toevoegen via het formulier hieronder gaat naar <strong>portfolio.json</strong> — de live data van werk.html.
+        Met de <strong>GitHub Token</strong> hieronder publiceer je wijzigingen automatisch (live binnen 1 min).
+        Zonder token: klik <strong>"Exporteer JSON"</strong> en plak handmatig in github.com/cedricsegers11/Spidavisuals/edit/main/portfolio.json
+      </div>
+
+      <!-- GitHub token instellen (eenmalig) -->
+      <div class="admin-panel" id="ghTokenPanel">
+        <div class="admin-panel-head">
+          <h2>⚙ GitHub auto-publish (eenmalige setup)</h2>
+          <span class="admin-panel-sub" id="ghTokenStatus">Status: niet ingesteld</span>
+        </div>
+        <details>
+          <summary style="cursor:pointer;color:var(--text-2);margin-bottom:14px">Hoe maak ik een token?</summary>
+          <ol style="color:var(--text-2);font-size:14px;line-height:1.7;padding-left:20px">
+            <li>Open <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener" style="color:#fff">github.com/settings/personal-access-tokens/new</a></li>
+            <li>Token name: <code>Spida Admin</code></li>
+            <li>Expiration: 1 year (of 90 days voor extra veiligheid)</li>
+            <li>Repository access: <strong>Only select repositories</strong> → kies <code>Spidavisuals</code></li>
+            <li>Permissions → <strong>Repository permissions</strong> → <strong>Contents</strong> → <strong>Read and write</strong></li>
+            <li>Klik <strong>Generate token</strong> → kopieer (begint met <code>github_pat_...</code>)</li>
+            <li>Plak hieronder en sla op</li>
+          </ol>
+        </details>
+        <form id="ghTokenForm" class="settings-form">
+          <label>
+            <span>GitHub Personal Access Token</span>
+            <input type="password" id="ghToken" placeholder="github_pat_..." autocomplete="off" />
+          </label>
+          <div style="display:flex;gap:8px">
+            <button type="submit" class="btn btn-primary">Sla token op</button>
+            <button type="button" class="btn btn-ghost" id="ghTokenClear">Token wissen</button>
+          </div>
+          <p class="form-status" id="ghTokenStatusMsg" aria-live="polite"></p>
+        </form>
       </div>
 
       <div class="admin-panel">
@@ -306,13 +337,14 @@
         <div class="admin-panel-head">
           <div>
             <h2>Alle portfolio items</h2>
-            <span class="admin-panel-sub" id="pfCount">0 live · 0 concept</span>
+            <span class="admin-panel-sub" id="pfCount">— items</span>
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-primary" id="pfPublish">⤴ Publiceer naar live site</button>
             <button class="btn btn-ghost" id="pfExport">⤓ Exporteer JSON</button>
-            <button class="btn btn-ghost" id="pfExportHtml">⤓ Exporteer HTML-snippets</button>
           </div>
         </div>
+        <p class="form-status" id="pfPublishStatus" aria-live="polite"></p>
         <div id="pfList"></div>
       </div>
     </section>
@@ -488,11 +520,13 @@ function fmtDateLong(iso) {
   return new Date(iso).toLocaleString('nl-NL', { dateStyle:'full', timeStyle:'short' });
 }
 
-function initDashboard() {
+async function initDashboard() {
   renderTime();
   setInterval(renderTime, 1000);
   setInterval(() => { renderVisitorStats(loadVisits()); }, 5000); // live updates
   switchTab('dashboard');
+  await loadPortfolioFromServer(); // laad portfolio uit portfolio.json
+  ghTokenStatusUpdate();
   refreshAll();
 
   // Tab nav
@@ -949,87 +983,67 @@ function renderFunnel(leads) {
   document.getElementById('funnel').innerHTML = html;
 }
 
-/* ========== PORTFOLIO MANAGEMENT ========== */
-/* DEFAULT_PORTFOLIO = items die al in werk.html en index.html staan (hardcoded, live).
-   Niet bewerkbaar/verwijderbaar vanuit admin — alleen ter overzicht.
-   Voor wijzigingen op live items: pas werk.html / index.html aan + push. */
-const DEFAULT_PORTFOLIO = [
-  { platform:'youtube', tag:'Long Form · Edit', url:'https://youtu.be/HzdrSRrUnKo', title:'YouTube edit · #1', desc:'Long form content uitgewerkt met pacing, color en sound.' },
-  { platform:'youtube', tag:'YouTube · Showcase', url:'https://youtu.be/mXHcd78MsoM', title:'YouTube edit · #2', desc:'Cinematic montage met motion accents en sound design.' },
-  { platform:'youtube', tag:'YouTube · Edit', url:'https://youtu.be/2jcbBs2dzus', title:'YouTube edit · #3', desc:'Long form project met motion accents en color treatment.' },
-  { platform:'instagram', tag:'Reel · @icemanvieze', url:'https://www.instagram.com/reel/DSxJINUDRd1/', title:'ICE — Bedankje 2025', desc:'Stage performance bedankje, gemonteerd voor Reels.' },
-  { platform:'tiktok', tag:'Horeca · @eetcafedehoek', url:'https://vm.tiktok.com/ZGdmynoNd/', title:'Café De Hoek — Behind the Scenes', desc:'CAG-Döner BTS edit voor TikTok.' },
-  { platform:'tiktok', tag:'TikTok · Vertical', url:'https://vm.tiktok.com/ZGdHf7XAU/', title:'TikTok edit · #2', desc:'Hook in seconde één — daarna pacing die kijkers vasthoudt.' },
-  { platform:'tiktok', tag:'TikTok · @jesuissnasser', url:'https://www.tiktok.com/@jesuissnasser/video/7617491019231218976', title:'TikTok edit · #3', desc:'Verticale edit met scroll-stopping opening en sterke pacing.' },
-  { platform:'tiktok', tag:'TikTok · @ytdialo', url:'https://www.tiktok.com/@ytdialo/video/7637918526531063062', title:'TikTok edit · #4', desc:'Verticale edit met sterke pacing en hook in seconde één.' },
-  { platform:'tiktok', tag:'Automotive · @kbgcustomz', url:'https://www.tiktok.com/@kbgcustomz', title:'KGB Customs — TikTok Opnamen', desc:'On-set camera-werk en opnamen voor automotive customizer KGB Customs.' }
-];
+/* ========== PORTFOLIO MANAGEMENT (portfolio.json based) ========== */
+const STORAGE_GH_TOKEN = 'spida_github_token';
+const GH_OWNER = 'cedricsegers11';
+const GH_REPO = 'Spidavisuals';
+const GH_FILE = 'portfolio.json';
+const GH_BRANCH = 'main';
 
-function loadPortfolio() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_PORTFOLIO) || '[]'); }
-  catch { return []; }
+let portfolioItems = []; // working copy
+let portfolioSha = null; // for GitHub PUT API
+
+/* Laad portfolio.json bij start */
+async function loadPortfolioFromServer() {
+  try {
+    const res = await fetch(GH_FILE + '?t=' + Date.now());
+    if (!res.ok) throw new Error('Niet bereikbaar');
+    const data = await res.json();
+    portfolioItems = data.items || [];
+  } catch (e) {
+    portfolioItems = [];
+  }
 }
-function savePortfolio(items) {
-  localStorage.setItem(STORAGE_PORTFOLIO, JSON.stringify(items));
-}
-function allPortfolioItems() {
-  return [
-    ...DEFAULT_PORTFOLIO.map(it => ({ ...it, _source: 'live' })),
-    ...loadPortfolio().map(it => ({ ...it, _source: 'draft' }))
-  ];
+
+function savePortfolioLocal() {
+  localStorage.setItem(STORAGE_PORTFOLIO, JSON.stringify(portfolioItems));
 }
 
 function renderPortfolioList() {
-  const items = allPortfolioItems();
   const list = document.getElementById('pfList');
   if (!list) return;
-  if (!items.length) {
-    list.innerHTML = '<div class="empty-state">Geen portfolio items.</div>';
+  if (!portfolioItems.length) {
+    list.innerHTML = '<div class="empty-state">Geen portfolio items. Voeg er één toe via het formulier hierboven.</div>';
+    const counter = document.getElementById('pfCount');
+    if (counter) counter.textContent = '0 items';
     return;
   }
-  // Custom item indices for delete button (only custom, not default)
-  let customIdx = -1;
-  list.innerHTML = items.map((it) => {
-    const isDraft = it._source === 'draft';
-    if (isDraft) customIdx++;
-    const statusBadge = isDraft
-      ? '<span class="pf-badge pf-badge--draft">● Concept</span>'
-      : '<span class="pf-badge pf-badge--live">✓ Live op website</span>';
-    const delBtn = isDraft
-      ? `<button class="btn btn-ghost btn-danger pf-del-btn" data-pf-del="${customIdx}" type="button">🗑 Verwijder</button>`
-      : `<span class="pf-locked mono small">🔒 In code</span>`;
-    return `
-    <div class="pf-item ${isDraft ? 'pf-item--draft' : 'pf-item--live'}">
+  list.innerHTML = portfolioItems.map((it, idx) => `
+    <div class="pf-item">
       <div class="pf-thumb">
         ${it.thumb ? `<img src="${escapeAttr(it.thumb)}" alt="" loading="lazy" />` : `<div class="pf-thumb-empty pf-thumb--${it.platform}">${it.platform.toUpperCase()}</div>`}
       </div>
       <div class="pf-info">
-        <div class="pf-status-row">
-          ${statusBadge}
-          <span class="mono small mute">${it.platform.toUpperCase()} · ${escapeHtml(it.tag||'')}</span>
-        </div>
-        <h4>${escapeHtml(it.title)}</h4>
+        <div class="mono small mute">${(it.platform||'').toUpperCase()} · ${escapeHtml(it.tag||'')}</div>
+        <h4>${escapeHtml(it.title||'')}</h4>
         ${it.desc ? `<p>${escapeHtml(it.desc)}</p>` : ''}
-        <a href="${escapeAttr(it.url)}" target="_blank" rel="noopener" class="mono small pf-url">${escapeHtml(it.url)}</a>
+        <a href="${escapeAttr(it.url)}" target="_blank" rel="noopener" class="mono small pf-url">${escapeHtml(it.url||'')}</a>
       </div>
-      ${delBtn}
+      <button class="btn btn-ghost btn-danger pf-del-btn" data-pf-del="${idx}" type="button">🗑 Verwijder</button>
     </div>
-  `;
-  }).join('');
+  `).join('');
   list.querySelectorAll('[data-pf-del]').forEach(btn => {
     btn.addEventListener('click', () => {
-      if (!confirm('Concept-item verwijderen?')) return;
-      const arr = loadPortfolio();
-      arr.splice(parseInt(btn.dataset.pfDel, 10), 1);
-      savePortfolio(arr);
+      const idx = parseInt(btn.dataset.pfDel, 10);
+      const it = portfolioItems[idx];
+      if (!confirm(`Item "${it.title}" verwijderen?`)) return;
+      portfolioItems.splice(idx, 1);
+      savePortfolioLocal();
       renderPortfolioList();
     });
   });
-  // Counts
-  const drafts = items.filter(i => i._source === 'draft').length;
-  const live = items.filter(i => i._source === 'live').length;
   const counter = document.getElementById('pfCount');
-  if (counter) counter.textContent = `${live} live · ${drafts} concept`;
+  if (counter) counter.textContent = portfolioItems.length + ' items';
 }
 
 /* Thumbnail upload — leest bestand als data URI */
@@ -1077,16 +1091,98 @@ document.getElementById('portfolioForm')?.addEventListener('submit', (e) => {
   const thumb = thumbUrl || pendingThumbDataUri || '';
   const status = document.getElementById('pfStatus');
   if (!platform || !url || !title || !tag) { status.textContent = '// Vul alle verplichte velden in'; return; }
-  const arr = loadPortfolio();
-  arr.push({ id: Date.now().toString(36), platform, tag, url, title, desc, thumb });
-  savePortfolio(arr);
-  status.textContent = '// ✓ Item toegevoegd';
+  portfolioItems.push({ id: Date.now().toString(36), platform, tag, url, title, desc, thumb });
+  savePortfolioLocal();
+  status.textContent = '// ✓ Toegevoegd. Klik "Publiceer naar live site" om het zichtbaar te maken voor bezoekers.';
   e.target.reset();
   pendingThumbDataUri = null;
   document.getElementById('pfThumbPreview').style.display = 'none';
   document.getElementById('pfThumbPreview').innerHTML = '';
   renderPortfolioList();
-  setTimeout(() => { status.textContent = ''; }, 1800);
+  setTimeout(() => { status.textContent = ''; }, 5000);
+});
+
+/* GitHub Token opslaan */
+function ghTokenStatusUpdate() {
+  const has = !!localStorage.getItem(STORAGE_GH_TOKEN);
+  const el = document.getElementById('ghTokenStatus');
+  if (el) el.textContent = has ? '✓ Token ingesteld — auto-publish actief' : 'Status: niet ingesteld';
+}
+document.getElementById('ghTokenForm')?.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const tok = document.getElementById('ghToken').value.trim();
+  const status = document.getElementById('ghTokenStatusMsg');
+  if (!tok.startsWith('github_pat_') && !tok.startsWith('ghp_')) {
+    status.textContent = '// FOUT: token begint normaal met github_pat_ of ghp_';
+    return;
+  }
+  localStorage.setItem(STORAGE_GH_TOKEN, tok);
+  document.getElementById('ghToken').value = '';
+  status.textContent = '// ✓ TOKEN OPGESLAGEN — auto-publish actief';
+  ghTokenStatusUpdate();
+  setTimeout(() => { status.textContent = ''; }, 3000);
+});
+document.getElementById('ghTokenClear')?.addEventListener('click', () => {
+  if (!confirm('Token verwijderen? Auto-publish werkt dan niet meer.')) return;
+  localStorage.removeItem(STORAGE_GH_TOKEN);
+  ghTokenStatusUpdate();
+  document.getElementById('ghTokenStatusMsg').textContent = '// Token gewist';
+});
+
+/* Publiceer naar GitHub (en dus naar live site) */
+document.getElementById('pfPublish')?.addEventListener('click', async () => {
+  const status = document.getElementById('pfPublishStatus');
+  const token = localStorage.getItem(STORAGE_GH_TOKEN);
+  if (!token) {
+    status.textContent = '// FOUT: stel eerst een GitHub Token in hierboven (zie uitleg).';
+    return;
+  }
+  if (!confirm(`Publiceer ${portfolioItems.length} items naar de live website?`)) return;
+
+  status.textContent = '// PUBLICEREN...';
+  try {
+    // 1. Haal huidige file op voor SHA
+    const apiUrl = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}?ref=${GH_BRANCH}`;
+    const getRes = await fetch(apiUrl, {
+      headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' }
+    });
+    if (!getRes.ok) {
+      const err = await getRes.json().catch(() => ({}));
+      throw new Error(err.message || `GitHub GET ${getRes.status}`);
+    }
+    const fileData = await getRes.json();
+    portfolioSha = fileData.sha;
+
+    // 2. Build new JSON
+    const newJson = JSON.stringify({
+      version: 1,
+      lastUpdated: new Date().toISOString(),
+      items: portfolioItems
+    }, null, 2);
+
+    // 3. Encode to base64 (handle Unicode)
+    const contentB64 = btoa(unescape(encodeURIComponent(newJson)));
+
+    // 4. PUT update
+    const putRes = await fetch(apiUrl, {
+      method: 'PUT',
+      headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' },
+      body: JSON.stringify({
+        message: `Portfolio update via admin (${portfolioItems.length} items)`,
+        content: contentB64,
+        sha: portfolioSha,
+        branch: GH_BRANCH
+      })
+    });
+    if (!putRes.ok) {
+      const err = await putRes.json().catch(() => ({}));
+      throw new Error(err.message || `GitHub PUT ${putRes.status}`);
+    }
+    status.textContent = '// ✓ GEPUBLICEERD! Netlify deployt nu automatisch. Live binnen 1-2 min.';
+    setTimeout(() => { status.textContent = ''; }, 10000);
+  } catch (e) {
+    status.textContent = `// FOUT: ${e.message}. Token correct? Heeft het Contents-write permissie?`;
+  }
 });
 
 document.getElementById('pfExport')?.addEventListener('click', () => {
