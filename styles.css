@@ -557,6 +557,20 @@ body.is-logged-in .nav-account{display:none}
   word-break:break-all;font-size:11px;
 }
 .pf-del-btn{align-self:flex-start}
+.pf-actions{
+  display:flex;flex-direction:column;gap:6px;
+  align-self:flex-start;
+}
+.pf-edit-btn{white-space:nowrap}
+.pf-item--editing{
+  background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.18);
+  margin:0 -14px;padding:14px;border-radius:var(--r-sm);
+}
+.pf-form-editing{
+  border-color:rgba(255,255,255,0.25) !important;
+  box-shadow:0 0 0 1px rgba(255,255,255,0.1);
+}
 .pf-locked{
   color:var(--text-3);padding:8px 14px;
   border:1px dashed var(--line);border-radius:var(--r-sm);

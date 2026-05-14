@@ -306,9 +306,10 @@
         </form>
       </div>
 
-      <div class="admin-panel">
+      <div class="admin-panel" id="pfFormPanel">
         <div class="admin-panel-head">
-          <h2>Nieuw item toevoegen</h2>
+          <h2 id="pfFormTitle">Nieuw item toevoegen</h2>
+          <span class="admin-panel-sub" id="pfFormSub">Vul de velden in en klik onderaan op toevoegen.</span>
         </div>
         <form id="portfolioForm" class="settings-form">
           <div class="settings-row">
@@ -348,7 +349,10 @@
           </label>
           <div id="pfThumbPreview" class="thumb-preview" style="display:none"></div>
 
-          <button type="submit" class="btn btn-primary">+ Item toevoegen</button>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button type="submit" class="btn btn-primary" id="pfSubmitBtn">+ Item toevoegen</button>
+            <button type="button" class="btn btn-ghost" id="pfCancelEditBtn" style="display:none">Annuleer bewerken</button>
+          </div>
           <p class="form-status" id="pfStatus" aria-live="polite"></p>
         </form>
       </div>
@@ -1012,6 +1016,7 @@ const GH_BRANCH = 'main';
 
 let portfolioItems = []; // working copy
 let portfolioSha = null; // for GitHub PUT API
+let editingIndex = -1;   // -1 = nieuw item, anders = index van item dat bewerkt wordt
 
 /* Laad portfolio.json bij start */
 async function loadPortfolioFromServer() {
@@ -1088,7 +1093,7 @@ function renderPortfolioList() {
     return;
   }
   list.innerHTML = portfolioItems.map((it, idx) => `
-    <div class="pf-item">
+    <div class="pf-item ${idx === editingIndex ? 'pf-item--editing' : ''}">
       <div class="pf-thumb">
         ${it.thumb ? `<img src="${escapeAttr(it.thumb)}" alt="" loading="lazy" />` : `<div class="pf-thumb-empty pf-thumb--${it.platform}">${it.platform.toUpperCase()}</div>`}
       </div>
@@ -1098,7 +1103,10 @@ function renderPortfolioList() {
         ${it.desc ? `<p>${escapeHtml(it.desc)}</p>` : ''}
         <a href="${escapeAttr(it.url)}" target="_blank" rel="noopener" class="mono small pf-url">${escapeHtml(it.url||'')}</a>
       </div>
-      <button class="btn btn-ghost btn-danger pf-del-btn" data-pf-del="${idx}" type="button">🗑 Verwijder</button>
+      <div class="pf-actions">
+        <button class="btn btn-ghost pf-edit-btn" data-pf-edit="${idx}" type="button">✏️ Bewerk</button>
+        <button class="btn btn-ghost btn-danger pf-del-btn" data-pf-del="${idx}" type="button">🗑 Verwijder</button>
+      </div>
     </div>
   `).join('');
   list.querySelectorAll('[data-pf-del]').forEach(btn => {
@@ -1107,10 +1115,19 @@ function renderPortfolioList() {
       const it = portfolioItems[idx];
       if (!confirm(`Item "${it.title}" verwijderen?\n\nWordt direct verwijderd van de live website (~1 min).`)) return;
       portfolioItems.splice(idx, 1);
+      // Als we het item bewerkten dat verwijderd is, of een item daarna, reset edit state
+      if (editingIndex === idx) cancelEditing();
+      else if (editingIndex > idx) editingIndex--;
       savePortfolioLocal();
       renderPortfolioList();
       // Auto-publish naar live
       await publishToGitHub();
+    });
+  });
+  list.querySelectorAll('[data-pf-edit]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.pfEdit, 10);
+      startEditing(idx);
     });
   });
   const counter = document.getElementById('pfCount');
@@ -1151,6 +1168,54 @@ document.getElementById('pfThumb')?.addEventListener('input', () => {
   }
 });
 
+/* ===== EDIT STATE HELPERS ===== */
+function startEditing(idx) {
+  editingIndex = idx;
+  const it = portfolioItems[idx];
+  if (!it) return;
+  document.getElementById('pfPlatform').value = it.platform || 'youtube';
+  document.getElementById('pfTag').value = it.tag || '';
+  document.getElementById('pfUrl').value = it.url || '';
+  document.getElementById('pfTitle').value = it.title || '';
+  document.getElementById('pfDesc').value = it.desc || '';
+  document.getElementById('pfThumb').value = it.thumb && !it.thumb.startsWith('data:') ? it.thumb : '';
+  pendingThumbDataUri = it.thumb && it.thumb.startsWith('data:') ? it.thumb : null;
+  const preview = document.getElementById('pfThumbPreview');
+  if (it.thumb) {
+    preview.style.display = 'flex';
+    preview.innerHTML = `<img src="${it.thumb}" alt="Preview" /><span class="mono small">Huidige thumbnail</span>`;
+  } else {
+    preview.style.display = 'none';
+    preview.innerHTML = '';
+  }
+  // UI updates
+  document.getElementById('pfFormTitle').textContent = `✏️ Item bewerken: ${it.title}`;
+  document.getElementById('pfFormSub').textContent = 'Pas de velden aan en klik op opslaan. Wijzigingen gaan direct live.';
+  document.getElementById('pfSubmitBtn').textContent = '✓ Wijzigingen opslaan';
+  document.getElementById('pfCancelEditBtn').style.display = 'inline-flex';
+  document.getElementById('pfFormPanel').classList.add('pf-form-editing');
+  // Scroll naar form
+  document.getElementById('pfFormPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  renderPortfolioList(); // re-render to highlight editing row
+}
+
+function cancelEditing() {
+  editingIndex = -1;
+  document.getElementById('portfolioForm').reset();
+  pendingThumbDataUri = null;
+  document.getElementById('pfThumbPreview').style.display = 'none';
+  document.getElementById('pfThumbPreview').innerHTML = '';
+  document.getElementById('pfFormTitle').textContent = 'Nieuw item toevoegen';
+  document.getElementById('pfFormSub').textContent = 'Vul de velden in en klik onderaan op toevoegen.';
+  document.getElementById('pfSubmitBtn').textContent = '+ Item toevoegen';
+  document.getElementById('pfCancelEditBtn').style.display = 'none';
+  document.getElementById('pfFormPanel').classList.remove('pf-form-editing');
+  document.getElementById('pfStatus').textContent = '';
+  renderPortfolioList();
+}
+
+document.getElementById('pfCancelEditBtn')?.addEventListener('click', cancelEditing);
+
 document.getElementById('portfolioForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const platform = document.getElementById('pfPlatform').value;
@@ -1162,16 +1227,30 @@ document.getElementById('portfolioForm')?.addEventListener('submit', async (e) =
   const thumb = thumbUrl || pendingThumbDataUri || '';
   const status = document.getElementById('pfStatus');
   if (!platform || !url || !title || !tag) { status.textContent = '// Vul alle verplichte velden in'; return; }
-  portfolioItems.push({ id: Date.now().toString(36), platform, tag, url, title, desc, thumb });
-  savePortfolioLocal();
-  status.textContent = '// ✓ Toegevoegd. Publiceren naar live site...';
-  e.target.reset();
-  pendingThumbDataUri = null;
-  document.getElementById('pfThumbPreview').style.display = 'none';
-  document.getElementById('pfThumbPreview').innerHTML = '';
-  renderPortfolioList();
-  // Auto-publish naar live
-  await publishToGitHub();
+
+  if (editingIndex >= 0 && portfolioItems[editingIndex]) {
+    // BEWERK MODUS
+    portfolioItems[editingIndex] = {
+      ...portfolioItems[editingIndex],
+      platform, tag, url, title, desc, thumb
+    };
+    savePortfolioLocal();
+    status.textContent = '// ✓ Wijzigingen opgeslagen. Publiceren naar live site...';
+    cancelEditing();
+    renderPortfolioList();
+    await publishToGitHub();
+  } else {
+    // NIEUW ITEM
+    portfolioItems.push({ id: Date.now().toString(36), platform, tag, url, title, desc, thumb });
+    savePortfolioLocal();
+    status.textContent = '// ✓ Toegevoegd. Publiceren naar live site...';
+    e.target.reset();
+    pendingThumbDataUri = null;
+    document.getElementById('pfThumbPreview').style.display = 'none';
+    document.getElementById('pfThumbPreview').innerHTML = '';
+    renderPortfolioList();
+    await publishToGitHub();
+  }
   setTimeout(() => { status.textContent = ''; }, 6000);
 });
 
