@@ -321,14 +321,66 @@
     const res = await fetch('portfolio.json?t=' + Date.now()); // cache-bust
     if (!res.ok) throw new Error('portfolio.json niet bereikbaar');
     const data = await res.json();
-    if (!data.items || !data.items.length) return;
+    if (!data.items || !data.items.length) {
+      initFilters();
+      fetchMissingThumbnails();
+      return;
+    }
     renderPortfolio(data.items);
   } catch (e) {
     // Hardcoded HTML in workGrid blijft staan als fallback
     console.warn('portfolio.json niet geladen, hardcoded items gebruikt:', e.message);
   }
   initFilters();
+  // Belangrijk: ná het renderen TikTok + Instagram thumbnails inladen
+  fetchMissingThumbnails();
 })();
+
+// Haalt thumbnails op voor TikTok (oEmbed) en Instagram (thum.io screenshot)
+// voor items die nog geen <img class="work-thumb-img"> hebben.
+async function fetchMissingThumbnails() {
+  const items = document.querySelectorAll('#workGrid .work-item');
+  for (const item of items) {
+    if (item.querySelector('.work-thumb-img')) continue; // al een thumbnail
+    const url = item.href;
+    const platform = item.dataset.platform;
+    let thumbUrl = null;
+
+    if (platform === 'tiktok') {
+      // Skip profiel-URLs (zonder /video/...)
+      if (url.match(/tiktok\.com\/@[^/]+\/?(\?|$)/)) {
+        // KGB Customs etc — gebruik thum.io screenshot van profielpagina
+        thumbUrl = `https://image.thum.io/get/width/640/crop/900/maxAge/2880/${url.split('?')[0]}`;
+      } else {
+        try {
+          const res = await fetch('https://www.tiktok.com/oembed?url=' + encodeURIComponent(url));
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.thumbnail_url) thumbUrl = data.thumbnail_url;
+          }
+        } catch (e) { /* val door */ }
+      }
+    } else if (platform === 'instagram') {
+      thumbUrl = `https://image.thum.io/get/width/640/crop/900/maxAge/2880/${url.split('?')[0]}`;
+    }
+
+    if (thumbUrl) {
+      const img = document.createElement('img');
+      img.className = 'work-thumb-img work-thumb-img--fetched';
+      img.src = thumbUrl;
+      img.alt = '';
+      img.loading = 'lazy';
+      img.referrerPolicy = 'no-referrer';
+      img.onerror = () => img.remove();
+      item.insertBefore(img, item.firstChild);
+      // Verberg de gradient placeholder zodra image laadt
+      img.onload = () => {
+        const placeholder = item.querySelector('.work-thumb');
+        if (placeholder) placeholder.style.opacity = '0';
+      };
+    }
+  }
+}
 
 function ytId(url) {
   const m = (url || '').match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/))([\w-]{11})/);
