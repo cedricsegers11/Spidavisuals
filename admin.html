@@ -1138,11 +1138,77 @@ function renderPortfolioList() {
   if (counter) counter.textContent = portfolioItems.length + ' items';
 }
 
-/* ===== AUTO-GENEREER THUMBNAIL ===== */
-let thumbRegenCount = 0;
+/* ===== AUTO-GENEREER THUMBNAIL (slimme detectie + fallbacks) ===== */
+let thumbCandidates = [];
+let thumbCandidateIdx = 0;
+let lastGeneratedUrl = '';
 
 function ytIdMatch(url) {
   return (url || '').match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([\w-]{11})/);
+}
+
+/* Test of een image URL succesvol laadt EN echt content heeft (geen 120x90 placeholder) */
+function probeImage(url) {
+  return new Promise(resolve => {
+    const img = new Image();
+    const timeout = setTimeout(() => resolve({ ok: false, reason: 'timeout' }), 5000);
+    img.onload = () => {
+      clearTimeout(timeout);
+      // YouTube placeholder is 120x90; alles groter is een echte thumb
+      const isPlaceholder = img.naturalWidth <= 130 && img.naturalHeight <= 100;
+      resolve({ ok: !isPlaceholder, width: img.naturalWidth, height: img.naturalHeight });
+    };
+    img.onerror = () => {
+      clearTimeout(timeout);
+      resolve({ ok: false, reason: 'error' });
+    };
+    img.src = url;
+  });
+}
+
+/* Bouw lijst van mogelijke thumbnail-URLs voor een gegeven URL+platform */
+async function buildThumbCandidates(urlInput, platform) {
+  const candidates = [];
+  const cleanUrl = urlInput.split('?')[0];
+
+  if (platform === 'youtube') {
+    const m = ytIdMatch(urlInput);
+    if (m) {
+      const id = m[1];
+      candidates.push({ url: `https://img.youtube.com/vi/${id}/maxresdefault.jpg`, label: 'YouTube · maxres (HD)' });
+      candidates.push({ url: `https://img.youtube.com/vi/${id}/hqdefault.jpg`,  label: 'YouTube · hq (480p)' });
+      candidates.push({ url: `https://img.youtube.com/vi/${id}/sddefault.jpg`,  label: 'YouTube · sd (640x480)' });
+      candidates.push({ url: `https://img.youtube.com/vi/${id}/mqdefault.jpg`,  label: 'YouTube · mq (320x180)' });
+    }
+  }
+
+  if (platform === 'tiktok') {
+    try {
+      const oembedUrl = `https://www.tiktok.com/oembed?url=${encodeURIComponent(urlInput)}`;
+      const res = await fetch(oembedUrl);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.thumbnail_url) {
+          candidates.push({ url: data.thumbnail_url, label: 'TikTok · officieel frame' });
+        }
+      }
+    } catch (e) { /* skip */ }
+  }
+
+  // Universele fallback voor elk platform: Microlink extract og:image
+  // (50 req/maand zonder API key)
+  candidates.push({
+    url: `https://api.microlink.io/?url=${encodeURIComponent(urlInput)}&embed=image.url`,
+    label: platform === 'instagram' ? 'Instagram · OG preview' : `${platform} · OG preview`
+  });
+
+  // Laatste fallback voor Instagram: thum.io screenshot
+  if (platform === 'instagram') {
+    candidates.push({ url: `https://image.thum.io/get/width/720/crop/1000/${cleanUrl}`, label: 'Instagram · screenshot' });
+    candidates.push({ url: `https://image.thum.io/get/width/800/${cleanUrl}`, label: 'Instagram · screenshot (groot)' });
+  }
+
+  return candidates;
 }
 
 async function generateThumbnail() {
@@ -1162,48 +1228,49 @@ async function generateThumbnail() {
   const originalLabel = btn.textContent;
   btn.textContent = '⏳ Bezig...';
 
-  let thumbUrl = '';
-  let label = '';
-
   try {
-    if (platform === 'youtube') {
-      const m = ytIdMatch(urlInput);
-      if (!m) throw new Error('Geen geldige YouTube URL — verwacht youtu.be/... of youtube.com/watch?v=...');
-      const id = m[1];
-      // Cycle door verschillende kwaliteiten bij meerdere klikken
-      const qualities = ['maxresdefault', 'hqdefault', 'sddefault', 'mqdefault'];
-      const q = qualities[thumbRegenCount % qualities.length];
-      thumbUrl = `https://img.youtube.com/vi/${id}/${q}.jpg`;
-      label = `YouTube · ${q}`;
-    } else if (platform === 'tiktok') {
-      // TikTok oEmbed
-      const oembedUrl = `https://www.tiktok.com/oembed?url=${encodeURIComponent(urlInput)}`;
-      const res = await fetch(oembedUrl);
-      if (!res.ok) throw new Error('TikTok oEmbed faalde (' + res.status + ')');
-      const data = await res.json();
-      if (!data.thumbnail_url) throw new Error('Geen thumbnail beschikbaar voor deze TikTok');
-      thumbUrl = data.thumbnail_url;
-      label = 'TikTok · officieel';
-    } else if (platform === 'instagram') {
-      // thum.io page screenshot (Instagram heeft geen publieke API)
-      const cleanUrl = urlInput.split('?')[0];
-      const variants = [
-        `https://image.thum.io/get/width/640/crop/900/${cleanUrl}`,
-        `https://image.thum.io/get/width/640/crop/1200/${cleanUrl}`,
-        `https://image.thum.io/get/width/800/${cleanUrl}`,
-      ];
-      thumbUrl = variants[thumbRegenCount % variants.length] + '?r=' + Date.now();
-      label = 'Instagram · screenshot (kan login-overlay tonen)';
+    // Herbuild candidates als URL veranderd is
+    if (lastGeneratedUrl !== urlInput) {
+      thumbCandidates = await buildThumbCandidates(urlInput, platform);
+      thumbCandidateIdx = 0;
+      lastGeneratedUrl = urlInput;
     }
 
-    if (!thumbUrl) throw new Error('Geen thumbnail kon worden gegenereerd');
+    if (!thumbCandidates.length) {
+      throw new Error('Geen thumbnail bronnen beschikbaar voor deze URL');
+    }
 
-    // Vul input + toon preview
-    thumbInput.value = thumbUrl;
+    // Eerste klik: probeer slim de beste te vinden (skip placeholders)
+    let chosen = null;
+    let label = '';
+    if (thumbCandidateIdx === 0) {
+      for (let i = 0; i < thumbCandidates.length; i++) {
+        const cand = thumbCandidates[i];
+        const probe = await probeImage(cand.url);
+        if (probe.ok) {
+          chosen = cand;
+          thumbCandidateIdx = i + 1;
+          label = cand.label + ` (auto)`;
+          break;
+        }
+      }
+      if (!chosen) {
+        // Niks valideert succesvol — gebruik gewoon de eerste
+        chosen = thumbCandidates[0];
+        thumbCandidateIdx = 1;
+        label = chosen.label + ' (geforceerd)';
+      }
+    } else {
+      // Volgende kliks: cycle door candidates
+      chosen = thumbCandidates[thumbCandidateIdx % thumbCandidates.length];
+      label = chosen.label + ` (variant ${thumbCandidateIdx + 1}/${thumbCandidates.length})`;
+      thumbCandidateIdx++;
+    }
+
+    thumbInput.value = chosen.url;
     pendingThumbDataUri = null;
     preview.style.display = 'flex';
-    preview.innerHTML = `<img src="${thumbUrl}" alt="Preview" onerror="this.style.opacity='.3'" /><span class="mono small">${label}<br/>Niet tevreden? Klik <strong>✨ Auto-genereer</strong> nogmaals.</span>`;
-    thumbRegenCount++;
+    preview.innerHTML = `<img src="${chosen.url}" alt="Preview" onerror="this.style.opacity='.3';this.alt='⚠ Laden mislukt'" /><span class="mono small">${label}<br/>Niet goed? Klik <strong>✨ Auto-genereer</strong> nogmaals voor een andere versie.</span>`;
   } catch (e) {
     alert('Auto-genereer faalde: ' + e.message + '\n\nPlak in plaats daarvan handmatig een URL of upload een afbeelding.');
   } finally {
@@ -1214,9 +1281,9 @@ async function generateThumbnail() {
 
 document.getElementById('pfThumbGenBtn')?.addEventListener('click', generateThumbnail);
 
-// Reset regenerate counter wanneer URL of platform wijzigt
-document.getElementById('pfUrl')?.addEventListener('input', () => { thumbRegenCount = 0; });
-document.getElementById('pfPlatform')?.addEventListener('change', () => { thumbRegenCount = 0; });
+// Reset candidates wanneer URL of platform wijzigt
+document.getElementById('pfUrl')?.addEventListener('input', () => { thumbCandidates = []; thumbCandidateIdx = 0; lastGeneratedUrl = ''; });
+document.getElementById('pfPlatform')?.addEventListener('change', () => { thumbCandidates = []; thumbCandidateIdx = 0; lastGeneratedUrl = ''; });
 
 /* Thumbnail upload — leest bestand als data URI */
 let pendingThumbDataUri = null;
