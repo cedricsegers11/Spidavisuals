@@ -341,7 +341,11 @@
 
           <label>
             <span>Thumbnail (optioneel)</span>
-            <input type="url" id="pfThumb" placeholder="Plak hier een afbeelding-URL (bv. van imgbb.com)" />
+            <div class="thumb-input-row">
+              <input type="url" id="pfThumb" placeholder="Plak hier een afbeelding-URL (bv. van imgbb.com)" />
+              <button type="button" class="btn btn-ghost thumb-gen-btn" id="pfThumbGenBtn">✨ Auto-genereer</button>
+            </div>
+            <span class="thumb-hint mono small">Vul eerst de URL hierboven in, klik dan op auto-genereer. Niet tevreden? Klik nogmaals voor een andere versie.</span>
           </label>
           <label class="thumb-upload-label">
             <span>… of upload een afbeelding van je computer</span>
@@ -1133,6 +1137,86 @@ function renderPortfolioList() {
   const counter = document.getElementById('pfCount');
   if (counter) counter.textContent = portfolioItems.length + ' items';
 }
+
+/* ===== AUTO-GENEREER THUMBNAIL ===== */
+let thumbRegenCount = 0;
+
+function ytIdMatch(url) {
+  return (url || '').match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([\w-]{11})/);
+}
+
+async function generateThumbnail() {
+  const urlInput = document.getElementById('pfUrl').value.trim();
+  const platform = document.getElementById('pfPlatform').value;
+  const preview = document.getElementById('pfThumbPreview');
+  const thumbInput = document.getElementById('pfThumb');
+  const btn = document.getElementById('pfThumbGenBtn');
+
+  if (!urlInput) {
+    alert('Vul eerst de video URL in (boven het thumbnail-veld) voordat je auto-genereer klikt.');
+    document.getElementById('pfUrl').focus();
+    return;
+  }
+
+  btn.disabled = true;
+  const originalLabel = btn.textContent;
+  btn.textContent = '⏳ Bezig...';
+
+  let thumbUrl = '';
+  let label = '';
+
+  try {
+    if (platform === 'youtube') {
+      const m = ytIdMatch(urlInput);
+      if (!m) throw new Error('Geen geldige YouTube URL — verwacht youtu.be/... of youtube.com/watch?v=...');
+      const id = m[1];
+      // Cycle door verschillende kwaliteiten bij meerdere klikken
+      const qualities = ['maxresdefault', 'hqdefault', 'sddefault', 'mqdefault'];
+      const q = qualities[thumbRegenCount % qualities.length];
+      thumbUrl = `https://img.youtube.com/vi/${id}/${q}.jpg`;
+      label = `YouTube · ${q}`;
+    } else if (platform === 'tiktok') {
+      // TikTok oEmbed
+      const oembedUrl = `https://www.tiktok.com/oembed?url=${encodeURIComponent(urlInput)}`;
+      const res = await fetch(oembedUrl);
+      if (!res.ok) throw new Error('TikTok oEmbed faalde (' + res.status + ')');
+      const data = await res.json();
+      if (!data.thumbnail_url) throw new Error('Geen thumbnail beschikbaar voor deze TikTok');
+      thumbUrl = data.thumbnail_url;
+      label = 'TikTok · officieel';
+    } else if (platform === 'instagram') {
+      // thum.io page screenshot (Instagram heeft geen publieke API)
+      const cleanUrl = urlInput.split('?')[0];
+      const variants = [
+        `https://image.thum.io/get/width/640/crop/900/${cleanUrl}`,
+        `https://image.thum.io/get/width/640/crop/1200/${cleanUrl}`,
+        `https://image.thum.io/get/width/800/${cleanUrl}`,
+      ];
+      thumbUrl = variants[thumbRegenCount % variants.length] + '?r=' + Date.now();
+      label = 'Instagram · screenshot (kan login-overlay tonen)';
+    }
+
+    if (!thumbUrl) throw new Error('Geen thumbnail kon worden gegenereerd');
+
+    // Vul input + toon preview
+    thumbInput.value = thumbUrl;
+    pendingThumbDataUri = null;
+    preview.style.display = 'flex';
+    preview.innerHTML = `<img src="${thumbUrl}" alt="Preview" onerror="this.style.opacity='.3'" /><span class="mono small">${label}<br/>Niet tevreden? Klik <strong>✨ Auto-genereer</strong> nogmaals.</span>`;
+    thumbRegenCount++;
+  } catch (e) {
+    alert('Auto-genereer faalde: ' + e.message + '\n\nPlak in plaats daarvan handmatig een URL of upload een afbeelding.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalLabel;
+  }
+}
+
+document.getElementById('pfThumbGenBtn')?.addEventListener('click', generateThumbnail);
+
+// Reset regenerate counter wanneer URL of platform wijzigt
+document.getElementById('pfUrl')?.addEventListener('input', () => { thumbRegenCount = 0; });
+document.getElementById('pfPlatform')?.addEventListener('change', () => { thumbRegenCount = 0; });
 
 /* Thumbnail upload — leest bestand als data URI */
 let pendingThumbDataUri = null;
