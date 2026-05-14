@@ -457,12 +457,14 @@ const burger = document.getElementById('burger');
 const navLinks = document.querySelector('.nav-links');
 if (burger && navLinks) {
   burger.addEventListener('click', () => {
-    burger.classList.toggle('open');
-    navLinks.classList.toggle('open');
+    const isOpen = burger.classList.toggle('open');
+    navLinks.classList.toggle('open', isOpen);
+    document.body.classList.toggle('menu-open', isOpen);
   });
   navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
     burger.classList.remove('open');
     navLinks.classList.remove('open');
+    document.body.classList.remove('menu-open');
   }));
 }
 

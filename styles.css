@@ -2559,24 +2559,34 @@ body.is-logged-in .nav-account{display:none}
     position:fixed;top:0;left:0;right:0;bottom:0;
     background:#000;
     flex-direction:column;justify-content:center;align-items:center;
-    gap:28px;font-size:24px;font-family:var(--font-display);
+    gap:18px;font-size:26px;font-family:var(--font-display);
+    padding:80px 24px 40px;
     transform:translateY(-100%);
     opacity:0;visibility:hidden;pointer-events:none;
-    transition:transform .4s,opacity .3s,visibility 0s linear .3s;
-    z-index:55;
+    transition:transform .35s var(--ease-out),opacity .25s,visibility 0s linear .35s;
+    z-index:90;          /* boven nav, chatbot en alle content */
   }
   .nav-links.open{
     transform:translateY(0);
     opacity:1;visibility:visible;pointer-events:auto;
-    transition:transform .4s,opacity .3s,visibility 0s;
+    transition:transform .35s var(--ease-out),opacity .25s,visibility 0s;
   }
+  .nav-links a{
+    color:var(--text);font-weight:400;letter-spacing:-.015em;
+    padding:10px 18px;border-radius:8px;
+    transition:background .2s,color .2s;
+  }
+  .nav-links a:hover,.nav-links a:active{background:var(--ink-3);color:var(--teal)}
+  .nav-links a::after{display:none}
+  /* Voorkom dat de page scrolled wanneer menu open is */
+  body.menu-open{overflow:hidden}
   .nav-cta{display:none}
   .nav-admin{display:none}
   .lang-switcher{display:none}
   .nav-account{display:none}
   .profile-grid{grid-template-columns:1fr;padding:0 22px}
   .profile-panel--full{margin:0 22px 24px}
-  .nav-burger{display:flex;z-index:60}
+  .nav-burger{display:flex;z-index:95}
   .nav-burger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
   .nav-burger.open span:nth-child(2){opacity:0}
   .nav-burger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
@@ -2626,8 +2636,23 @@ body.is-logged-in .nav-account{display:none}
 
 /* Phones tot 720px — extra grid collapses + tighter spacing */
 @media(max-width:720px){
+  /* Diensten — alle services 1 kolom, auto-hoogte (geen forced 280px) */
+  .services,
+  .services--home,
   .services--full{grid-template-columns:1fr;grid-auto-rows:auto}
-  .services--full .service-card--lg{grid-column:span 1}
+  .service-card--lg{
+    grid-column:span 1;grid-row:span 1;
+    padding:28px 22px;
+  }
+  .service-card--lg h3{font-size:26px;margin-bottom:10px;line-height:1.1}
+  .service-card--lg p{font-size:15px;max-width:none}
+  .service-card{padding:24px 20px}
+  .service-card h3{font-size:20px;margin-bottom:8px}
+  .service-card p{font-size:14px;line-height:1.55}
+  .service-card::before{top:18px;right:18px;font-size:10.5px}
+  .service-card--cta{min-height:auto;padding:28px 22px}
+  .service-card ul{margin-top:14px}
+
   .reviews-grid{grid-template-columns:1fr}
   .reviews-grid .review-card,
   .reviews-grid .review-card:nth-child(4),
@@ -2664,6 +2689,9 @@ body.is-logged-in .nav-account{display:none}
   .section,.section-dark,.section-cta{padding:60px 16px}
   .section-head{margin-bottom:36px}
   .service-card,.service-card--lg{padding:22px 18px !important}
+  .service-card--lg h3{font-size:23px !important}
+  .service-card--lg p{font-size:14.5px !important}
+  .service-card h3{font-size:18.5px !important}
   .work-grid{grid-auto-rows:200px}
   .review-card{padding:22px 18px}
   .about-card{padding:24px 20px}
